@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense, lazy } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { motion, AnimatePresence } from 'framer-motion'
 import { OrbitControls } from '@react-three/drei'
 import './App.css'
-import SpaceScene from './components/SpaceScene'
+
+// Ленивая загрузка компонента сцены
+const SpaceScene = lazy(() => import('./components/SpaceScene'))
 
 function App() {
   const [step, setStep] = useState(0)
@@ -100,15 +102,44 @@ function App() {
     setSelectedPhoto((prev) => (prev - 1 + photos.length) % photos.length)
   }
 
+  // Предзагрузка критичных изображений
+  useEffect(() => {
+    const preloadImages = async () => {
+      const criticalImages = photos.slice(0, 5).map(p => p.src)
+      await Promise.all(
+        criticalImages.map(src => {
+          return new Promise((resolve, reject) => {
+            const img = new Image()
+            img.onload = resolve
+            img.onerror = reject
+            img.src = src
+          })
+        })
+      )
+    }
+    preloadImages()
+  }, [])
+
   return (
     <>
       <div className="canvas-container">
-        <Canvas camera={{ position: [0, 8, 42], fov: isMobile ? 60 : 50 }}>
-          <SpaceScene
-            step={step}
-            photoGroups={photoGroups}
-            onPhotoClick={handlePhotoClick}
-          />
+        <Canvas 
+          camera={{ position: [0, 8, 42], fov: isMobile ? 60 : 50 }}
+          dpr={[1, 1.5]} // Ограничиваем DPR для производительности
+          performance={{ min: 0.5 }} // Автоматическое снижение качества при лагах
+        >
+          <Suspense fallback={
+            <mesh>
+              <boxGeometry args={[1, 1, 1]} />
+              <meshBasicMaterial color="#ff6b9d" wireframe />
+            </mesh>
+          }>
+            <SpaceScene
+              step={step}
+              photoGroups={photoGroups}
+              onPhotoClick={handlePhotoClick}
+            />
+          </Suspense>
           <OrbitControls
             enableZoom={true}
             minDistance={isMobile ? 10 : 8}
@@ -117,6 +148,8 @@ function App() {
             enableRotate={true}
             autoRotate={false}
             rotateSpeed={isMobile ? 0.5 : 1}
+            enableDamping={true}
+            dampingFactor={0.05}
           />
         </Canvas>
       </div>

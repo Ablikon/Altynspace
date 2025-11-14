@@ -1,4 +1,4 @@
-import { useRef, useMemo, useState } from 'react'
+import { useRef, useMemo, useState, Suspense } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Stars, Sphere, MeshDistortMaterial, Float, Html, useTexture, RoundedBox } from '@react-three/drei'
 import * as THREE from 'three'
@@ -26,6 +26,7 @@ function useSmoothCamera(step) {
   })
 }
 
+// Оптимизированное ядро планеты с уменьшенной детализацией
 function PlanetCore({ map, color, size, detail = 64 }) {
   const meshRef = useRef()
   useFrame((state) => {
@@ -33,47 +34,42 @@ function PlanetCore({ map, color, size, detail = 64 }) {
     meshRef.current.rotation.y += 0.001
   })
 
-  // Уменьшил детализацию для производительности
-  const actualDetail = detail / 2
+  // Еще больше уменьшил детализацию для скорости
+  const actualDetail = Math.max(16, detail / 4)
 
   return (
     <Sphere ref={meshRef} args={[size, actualDetail, actualDetail]}>
       {map ? (
-        <meshStandardMaterial map={map} metalness={0.2} roughness={0.9} />
-      ) : (
-        <MeshDistortMaterial
-          color={color}
-          emissive={color}
-          emissiveIntensity={0.2}
-          distort={0.04}
-          speed={0.4}
-          roughness={0.7}
-          metalness={0.2}
+        <meshStandardMaterial 
+          map={map} 
+          metalness={0.2} 
+          roughness={0.9}
+          // Отключаем ненужные расчеты
+          transparent={false}
         />
+      ) : (
+        <meshBasicMaterial color={color} />
       )}
     </Sphere>
   )
 }
 
+// Упрощенная атмосфера планеты
 function PlanetAtmosphere({ color, size }) {
   return (
-    <>
-      <Sphere args={[size * 1.08, 32, 32]}>
-        <meshBasicMaterial color={color} transparent opacity={0.12} side={THREE.BackSide} />
-      </Sphere>
-      <Sphere args={[size * 1.18, 32, 32]}>
-        <meshBasicMaterial
-          color={color}
-          transparent
-          opacity={0.05}
-          side={THREE.BackSide}
-          blending={THREE.AdditiveBlending}
-        />
-      </Sphere>
-    </>
+    <Sphere args={[size * 1.08, 16, 16]}>
+      <meshBasicMaterial 
+        color={color} 
+        transparent 
+        opacity={0.12} 
+        side={THREE.BackSide}
+        depthWrite={false}
+      />
+    </Sphere>
   )
 }
 
+// Упрощенные кольца планеты
 function PlanetRings({ color, size }) {
   const ringRef = useRef()
   useFrame((state) => {
@@ -83,7 +79,7 @@ function PlanetRings({ color, size }) {
 
   return (
     <mesh ref={ringRef} rotation={[Math.PI / 2.2, 0, 0]}>
-      <torusGeometry args={[size * 2, size * 0.08, 32, 180]} />
+      <torusGeometry args={[size * 2, size * 0.08, 16, 64]} />
       <meshStandardMaterial
         color={color}
         emissive={color}
@@ -91,18 +87,26 @@ function PlanetRings({ color, size }) {
         transparent
         opacity={0.5}
         side={THREE.DoubleSide}
+        depthWrite={false}
       />
     </mesh>
   )
 }
 
+// Оптимизированная планета с Suspense
 function Planet({ position, color, size, withRings = false, texturePath }) {
   const texture = texturePath ? useTexture(texturePath) : null
 
   return (
     <Float speed={0.6} rotationIntensity={0.2} floatIntensity={0.2}>
       <group position={position}>
-        <PlanetCore map={texture} color={color} size={size} />
+        <Suspense fallback={
+          <Sphere args={[size, 8, 8]}>
+            <meshBasicMaterial color={color} wireframe />
+          </Sphere>
+        }>
+          <PlanetCore map={texture} color={color} size={size} />
+        </Suspense>
         <PlanetAtmosphere color={color} size={size} />
         {withRings && <PlanetRings color={color} size={size} />}
       </group>
@@ -279,11 +283,12 @@ function ShootingStar() {
   )
 }
 
+// Оптимизированная пыль
 function FloatingDust() {
   const ref = useRef()
   const points = useMemo(() => {
     const temp = []
-    for (let i = 0; i < 600; i++) { // Уменьшил с 1200 до 600
+    for (let i = 0; i < 300; i++) { // Уменьшил с 600 до 300
       const x = (Math.random() - 0.5) * 150
       const y = (Math.random() - 0.5) * 150
       const z = (Math.random() - 0.5) * 150
@@ -315,6 +320,7 @@ function FloatingDust() {
         opacity={0.6}
         sizeAttenuation
         blending={THREE.AdditiveBlending}
+        depthWrite={false}
       />
     </points>
   )
@@ -470,7 +476,7 @@ function PulsingRing({ planetPosition, size }) {
   )
 }
 
-// Сердце из красных частиц (главный акцент)
+// Оптимизированное сердце из частиц
 function HeartParticles({ planetPosition }) {
   const particlesRef = useRef()
   
@@ -482,8 +488,8 @@ function HeartParticles({ planetPosition }) {
       return [x * 0.6, y * 0.6]
     }
 
-    for (let i = 0; i < 300; i++) {
-      const t = (i / 300) * Math.PI * 2
+    for (let i = 0; i < 180; i++) { // Уменьшил с 300 до 180
+      const t = (i / 180) * Math.PI * 2
       const [hx, hy] = heartShape(t)
       const randomOffset = (Math.random() - 0.5) * 0.9
       temp.push(
@@ -521,6 +527,7 @@ function HeartParticles({ planetPosition }) {
         opacity={0.95}
         sizeAttenuation
         blending={THREE.AdditiveBlending}
+        depthWrite={false}
       />
     </points>
   )
@@ -569,13 +576,13 @@ export default function SpaceScene({ step, photoGroups, onPhotoClick }) {
       <ambientLight intensity={0.3} />
       <pointLight position={[50, 50, 50]} intensity={3} color="#ffffff" />
       <pointLight position={[-40, -40, -30]} intensity={2} color="#c471ed" />
-      <spotLight position={[0, 40, 40]} intensity={2.2} angle={0.4} penumbra={1} color="#ff6b9d" />
-      <spotLight position={[0, -25, 25]} intensity={1.3} angle={0.5} penumbra={1} color="#ffd700" />
+      <spotLight position={[0, 40, 40]} intensity={2.2} angle={0.4} penumbra={1} color="#ff6b9d" castShadow={false} />
+      <spotLight position={[0, -25, 25]} intensity={1.3} angle={0.5} penumbra={1} color="#ffd700" castShadow={false} />
 
       <Stars 
         radius={350}
         depth={150}
-        count={25000} // Уменьшил с 50000 до 25000
+        count={15000} // Уменьшил с 25000 до 15000
         factor={4}
         saturation={0} 
         fade={true}
@@ -583,41 +590,39 @@ export default function SpaceScene({ step, photoGroups, onPhotoClick }) {
       />
 
       <FloatingDust />
-      {[...Array(6)].map((_, i) => ( // Уменьшил с 10 до 6
+      {[...Array(4)].map((_, i) => ( // Уменьшил с 6 до 4
         <ShootingStar key={i} />
       ))}
 
-      {/* 8 летающих сердечек вместо 12 */}
-      {[...Array(8)].map((_, i) => (
-        <FlyingStarHeart key={`heart-${i}`} delay={i * 1.5} />
+      {/* 5 летающих сердечек вместо 8 */}
+      {[...Array(5)].map((_, i) => (
+        <FlyingStarHeart key={`heart-${i}`} delay={i * 1.8} />
       ))}
 
-      <Planet {...planetConfigs[1]} />
-      <Planet {...planetConfigs[2]} />
-      <Planet {...planetConfigs[3]} />
-      <Planet {...planetConfigs[4]} />
+      <Suspense fallback={null}>
+        <Planet {...planetConfigs[1]} />
+        <Planet {...planetConfigs[2]} />
+        <Planet {...planetConfigs[3]} />
+        <Planet {...planetConfigs[4]} />
+      </Suspense>
 
       {step >= 1 && step <= 3 && (
-        <PhotoRing
-          photos={photoGroups[step] || []}
-          planetPosition={planetConfigs[step].position}
-          onPhotoClick={onPhotoClick}
-          offset={planetConfigs[step].offset}
-        />
+        <Suspense fallback={null}>
+          <PhotoRing
+            photos={photoGroups[step] || []}
+            planetPosition={planetConfigs[step].position}
+            onPhotoClick={onPhotoClick}
+            offset={planetConfigs[step].offset}
+          />
+        </Suspense>
       )}
 
       {step === 4 && (
         <>
-          {/* Только тонкое кольцо */}
           <PulsingRing planetPosition={planetConfigs[4].position} size={planetConfigs[4].size} />
-          
-          {/* Меньше орбитальных огней */}
-          <OrbitalLights planetPosition={planetConfigs[4].position} radius={13} count={12} />
-          
-          {/* Красное сердце - ГЛАВНЫЙ АКЦЕНТ */}
+          <OrbitalLights planetPosition={planetConfigs[4].position} radius={13} count={8} /> {/* Уменьшил с 12 до 8 */}
           <HeartParticles planetPosition={planetConfigs[4].position} />
 
-          {/* Один белый свет сверху */}
           <spotLight
             position={[0, 32, -26]}
             target-position={planetConfigs[4].position}
@@ -625,6 +630,7 @@ export default function SpaceScene({ step, photoGroups, onPhotoClick }) {
             angle={0.18}
             penumbra={0.9}
             color="#ffffff"
+            castShadow={false}
           />
         </>
       )}
