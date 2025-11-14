@@ -1,11 +1,38 @@
-import { useState, useEffect, Suspense, lazy } from 'react'
+import { useState, useEffect } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { motion, AnimatePresence } from 'framer-motion'
 import { OrbitControls } from '@react-three/drei'
 import './App.css'
+import SpaceScene from './components/SpaceScene'
 
-// Ленивая загрузка компонента сцены
-const SpaceScene = lazy(() => import('./components/SpaceScene'))
+// импортируем все 27 фото как модули
+import photo1 from '/src/assets/gallery/photo1.JPG'
+import photo2 from '/src/assets/gallery/photo2.JPG'
+import photo3 from '/src/assets/gallery/photo3.JPG'
+import photo4 from '/src/assets/gallery/photo4.JPG'
+import photo5 from '/src/assets/gallery/photo5.JPG'
+import photo6 from '/src/assets/gallery/photo6.JPG'
+import photo7 from '/src/assets/gallery/photo7.png'
+import photo8 from '/src/assets/gallery/photo8.png'
+import photo9 from '/src/assets/gallery/photo9.png'
+import photo10 from '/src/assets/gallery/photo10.png'
+import photo11 from '/src/assets/gallery/photo11.png'
+import photo12 from '/src/assets/gallery/photo12.JPG'
+import photo13 from '/src/assets/gallery/photo13.png'
+import photo14 from '/src/assets/gallery/photo14.png'
+import photo15 from '/src/assets/gallery/photo15.png'
+import photo16 from '/src/assets/gallery/photo16.png'
+import photo17 from '/src/assets/gallery/photo17.png'
+import photo18 from '/src/assets/gallery/photo18.png'
+import photo19 from '/src/assets/gallery/photo19.png'
+import photo20 from '/src/assets/gallery/photo20.png'
+import photo21 from '/src/assets/gallery/photo21.png'
+import photo22 from '/src/assets/gallery/photo22.png'
+import photo23 from '/src/assets/gallery/photo23.png'
+import photo24 from '/src/assets/gallery/photo24.png'
+import photo25 from '/src/assets/gallery/photo25.JPG'
+import photo26 from '/src/assets/gallery/photo26.png'
+import photo27 from '/src/assets/gallery/photo27.png'
 
 function App() {
   const [step, setStep] = useState(0)
@@ -26,33 +53,33 @@ function App() {
   }, [])
 
   const photos = [
-    { src: '/gallery/photo1.JPG', caption: 'Момент, когда я понял, что ты - моя судьба 💫' },
-    { src: '/gallery/photo2.JPG', caption: 'Твоя улыбка освещает даже самые темные дни ✨' },
-    { src: '/gallery/photo3.JPG', caption: 'Это был лучший день! Помнишь? 🌟' },
-    { src: '/gallery/photo4.JPG', caption: 'С тобой каждое приключение становится волшебным 🎭' },
-    { src: '/gallery/photo5.JPG', caption: 'Твои глаза - целая вселенная 🌌' },
-    { src: '/gallery/photo6.JPG', caption: 'Наш маленький космос счастья 🌙' },
-    { src: '/gallery/photo7.png', caption: 'Ты делаешь обычные моменты особенными 💝' },
-    { src: '/gallery/photo8.png', caption: 'Вместе мы можем всё! 🚀' },
-    { src: '/gallery/photo9.png', caption: 'Эта фотка - доказательство нашей химии 💕' },
-    { src: '/gallery/photo10.png', caption: 'Когда ты рядом, время останавливается ⏰' },
-    { src: '/gallery/photo11.png', caption: 'Твой смех - моя любимая мелодия 🎵' },
-    { src: '/gallery/photo12.JPG', caption: 'Мы как две звезды на одной орбите 🌠' },
-    { src: '/gallery/photo13.png', caption: 'С тобой я чувствую себя как дома 🏡' },
-    { src: '/gallery/photo14.png', caption: 'Наша история только начинается 📖' },
-    { src: '/gallery/photo15.png', caption: 'Ты - мое самое яркое созвездие 🌟' },
-    { src: '/gallery/photo16.png', caption: 'Каждый день с тобой - это подарок 🎁' },
-    { src: '/gallery/photo17.png', caption: 'Мы создаем свою галактику любви 💖' },
-    { src: '/gallery/photo18.png', caption: 'Твоя поддержка значит для меня всё 🤗' },
-    { src: '/gallery/photo19.png', caption: 'Вот почему я влюбился в тебя снова 💘' },
-    { src: '/gallery/photo20.png', caption: 'Ты - мой любимый человек во вселенной 🌍' },
-    { src: '/gallery/photo21.png', caption: 'Наши мечты сбываются вместе ✨' },
-    { src: '/gallery/photo22.png', caption: 'Ты вдохновляешь меня быть лучше 🌈' },
-    { src: '/gallery/photo23.png', caption: 'С тобой я вижу мир по-другому 👁️' },
-    { src: '/gallery/photo24.png', caption: 'Наша любовь сильнее гравитации 💪' },
-    { src: '/gallery/photo25.JPG', caption: 'Спасибо, что ты есть в моей жизни 🙏' },
-    { src: '/gallery/photo26.png', caption: 'Мы - команда мечты! 🎯' },
-    { src: '/gallery/photo27.png', caption: 'Я люблю тебя больше, чем звезд на небе 🌃' },
+    { src: photo1, caption: 'Момент, когда я понял, что ты - моя судьба 💫' },
+    { src: photo2, caption: 'Твоя улыбка освещает даже самые темные дни ✨' },
+    { src: photo3, caption: 'Это был лучший день! Помнишь? 🌟' },
+    { src: photo4, caption: 'С тобой каждое приключение становится волшебным 🎭' },
+    { src: photo5, caption: 'Твои глаза - целая вселенная 🌌' },
+    { src: photo6, caption: 'Наш маленький космос счастья 🌙' },
+    { src: photo7, caption: 'Ты делаешь обычные моменты особенными 💝' },
+    { src: photo8, caption: 'Вместе мы можем всё! 🚀' },
+    { src: photo9, caption: 'Эта фотка - доказательство нашей химии 💕' },
+    { src: photo10, caption: 'Когда ты рядом, время останавливается ⏰' },
+    { src: photo11, caption: 'Твой смех - моя любимая мелодия 🎵' },
+    { src: photo12, caption: 'Мы как две звезды на одной орбите 🌠' },
+    { src: photo13, caption: 'С тобой я чувствую себя как дома 🏡' },
+    { src: photo14, caption: 'Наша история только начинается 📖' },
+    { src: photo15, caption: 'Ты - мое самое яркое созвездие 🌟' },
+    { src: photo16, caption: 'Каждый день с тобой - это подарок 🎁' },
+    { src: photo17, caption: 'Мы создаем свою галактику любви 💖' },
+    { src: photo18, caption: 'Твоя поддержка значит для меня всё 🤗' },
+    { src: photo19, caption: 'Вот почему я влюбился в тебя снова 💘' },
+    { src: photo20, caption: 'Ты - мой любимый человек во вселенной 🌍' },
+    { src: photo21, caption: 'Наши мечты сбываются вместе ✨' },
+    { src: photo22, caption: 'Ты вдохновляешь меня быть лучше 🌈' },
+    { src: photo23, caption: 'С тобой я вижу мир по-другому 👁️' },
+    { src: photo24, caption: 'Наша любовь сильнее гравитации 💪' },
+    { src: photo25, caption: 'Спасибо, что ты есть в моей жизни 🙏' },
+    { src: photo26, caption: 'Мы - команда мечты! 🎯' },
+    { src: photo27, caption: 'Я люблю тебя больше, чем звезд на небе 🌃' },
   ]
 
   const photoGroups = {
@@ -102,44 +129,38 @@ function App() {
     setSelectedPhoto((prev) => (prev - 1 + photos.length) % photos.length)
   }
 
-  // Предзагрузка критичных изображений
-  useEffect(() => {
-    const preloadImages = async () => {
-      const criticalImages = photos.slice(0, 5).map(p => p.src)
-      await Promise.all(
-        criticalImages.map(src => {
-          return new Promise((resolve, reject) => {
-            const img = new Image()
-            img.onload = resolve
-            img.onerror = reject
-            img.src = src
-          })
-        })
-      )
+  const handleNextStep = () => {
+    if (step === 4) { 
+      setStep(0)
+      setCurrentMessage(0)
+    } else { 
+      setStep(Math.min(step + 1, 4))
+      setCurrentMessage(Math.min(currentMessage + 1, messages.length - 1))
     }
-    preloadImages()
-  }, [])
+  }
+
+  const handlePrevStep = () => {
+    setStep(Math.max(step - 1, 0))
+    setCurrentMessage(Math.max(currentMessage - 1, 0))
+  }
 
   return (
     <>
       <div className="canvas-container">
         <Canvas 
           camera={{ position: [0, 8, 42], fov: isMobile ? 60 : 50 }}
-          dpr={[1, 1.5]} // Ограничиваем DPR для производительности
-          performance={{ min: 0.5 }} // Автоматическое снижение качества при лагах
+          dpr={[1, 2]}
+          gl={{ 
+            antialias: true,
+            alpha: false,
+            powerPreference: 'high-performance'
+          }}
         >
-          <Suspense fallback={
-            <mesh>
-              <boxGeometry args={[1, 1, 1]} />
-              <meshBasicMaterial color="#ff6b9d" wireframe />
-            </mesh>
-          }>
-            <SpaceScene
-              step={step}
-              photoGroups={photoGroups}
-              onPhotoClick={handlePhotoClick}
-            />
-          </Suspense>
+          <SpaceScene
+            step={step}
+            photoGroups={photoGroups}
+            onPhotoClick={handlePhotoClick}
+          />
           <OrbitControls
             enableZoom={true}
             minDistance={isMobile ? 10 : 8}
@@ -188,17 +209,14 @@ function App() {
                   <button
                     className="planet-button"
                     style={{ opacity: step === 0 ? 0.4 : 1 }}
-                    onClick={() => { setStep(Math.max(step - 1, 0)); setCurrentMessage(Math.max(currentMessage - 1, 0)); }}
+                    onClick={handlePrevStep}
                     disabled={step === 0}
                   >
                     Назад
                   </button>
                   <button
                     className="planet-button"
-                    onClick={() => { 
-                      if (step === 4) { setStep(0); setCurrentMessage(0); } 
-                      else { setStep(Math.min(step + 1, 4)); setCurrentMessage(Math.min(currentMessage + 1, messages.length - 1)); }
-                    }}
+                    onClick={handleNextStep}
                   >
                     {step === 4 ? 'Повторить ♻️' : 'Дальше ✨'}
                   </button>
@@ -220,7 +238,6 @@ function App() {
         )}
       </div>
 
-      {/* Просмотр фото - ПОЛНОСТЬЮ АДАПТИВНАЯ ВЕРСИЯ */}
       <AnimatePresence>
         {selectedPhoto !== null && (
           <motion.div
@@ -303,7 +320,6 @@ function App() {
                 </p>
               </div>
 
-              {/* Крестик */}
               <button
                 onClick={closePhoto}
                 style={{
@@ -329,7 +345,6 @@ function App() {
                 ✕
               </button>
 
-              {/* Стрелка влево */}
               <button
                 onClick={prevPhoto}
                 style={{
@@ -355,7 +370,6 @@ function App() {
                 ‹
               </button>
 
-              {/* Стрелка вправо */}
               <button
                 onClick={nextPhoto}
                 style={{
@@ -381,7 +395,6 @@ function App() {
                 ›
               </button>
 
-              {/* Счетчик */}
               <div style={{
                 position: 'absolute',
                 bottom: isMobile ? '0.3rem' : '1rem',

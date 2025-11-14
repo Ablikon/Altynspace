@@ -1,4 +1,4 @@
-import { useRef, useMemo, useState, Suspense } from 'react'
+import { useRef, useMemo, useState, useEffect } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Stars, Sphere, MeshDistortMaterial, Float, Html, useTexture, RoundedBox } from '@react-three/drei'
 import * as THREE from 'three'
@@ -26,29 +26,32 @@ function useSmoothCamera(step) {
   })
 }
 
-// Оптимизированное ядро планеты с уменьшенной детализацией
-function PlanetCore({ map, color, size, detail = 64 }) {
+// Ядро планеты: с текстурой, если есть, иначе — красивый distort
+function PlanetCore({ map, color, size }) {
   const meshRef = useRef()
-  useFrame((state) => {
+  useFrame(() => {
     if (!meshRef.current) return
-    meshRef.current.rotation.y += 0.001
+    meshRef.current.rotation.y += 0.002
   })
 
-  // Еще больше уменьшил детализацию для скорости
-  const actualDetail = Math.max(16, detail / 4)
-
   return (
-    <Sphere ref={meshRef} args={[size, actualDetail, actualDetail]}>
+    <Sphere ref={meshRef} args={[size, 32, 32]}>
       {map ? (
-        <meshStandardMaterial 
-          map={map} 
-          metalness={0.2} 
+        <meshStandardMaterial
+          map={map}
+          metalness={0.2}
           roughness={0.9}
-          // Отключаем ненужные расчеты
-          transparent={false}
         />
       ) : (
-        <meshBasicMaterial color={color} />
+        <MeshDistortMaterial
+          color={color}
+          emissive={color}
+          emissiveIntensity={0.3}
+          distort={0.1}
+          speed={0.5}
+          roughness={0.6}
+          metalness={0.3}
+        />
       )}
     </Sphere>
   )
@@ -57,15 +60,25 @@ function PlanetCore({ map, color, size, detail = 64 }) {
 // Упрощенная атмосфера планеты
 function PlanetAtmosphere({ color, size }) {
   return (
-    <Sphere args={[size * 1.08, 16, 16]}>
-      <meshBasicMaterial 
-        color={color} 
-        transparent 
-        opacity={0.12} 
-        side={THREE.BackSide}
-        depthWrite={false}
-      />
-    </Sphere>
+    <>
+      <Sphere args={[size * 1.12, 24, 24]}>
+        <meshBasicMaterial 
+          color={color} 
+          transparent 
+          opacity={0.15} 
+          side={THREE.BackSide}
+        />
+      </Sphere>
+      <Sphere args={[size * 1.22, 24, 24]}>
+        <meshBasicMaterial
+          color={color}
+          transparent
+          opacity={0.08}
+          side={THREE.BackSide}
+          blending={THREE.AdditiveBlending}
+        />
+      </Sphere>
+    </>
   )
 }
 
@@ -74,39 +87,32 @@ function PlanetRings({ color, size }) {
   const ringRef = useRef()
   useFrame((state) => {
     if (!ringRef.current) return
-    ringRef.current.rotation.z = Math.sin(state.clock.elapsedTime * 0.15) * 0.06
+    ringRef.current.rotation.z = Math.sin(state.clock.elapsedTime * 0.2) * 0.1
   })
 
   return (
     <mesh ref={ringRef} rotation={[Math.PI / 2.2, 0, 0]}>
-      <torusGeometry args={[size * 2, size * 0.08, 16, 64]} />
+      <torusGeometry args={[size * 2, size * 0.1, 24, 80]} />
       <meshStandardMaterial
         color={color}
         emissive={color}
-        emissiveIntensity={0.3}
+        emissiveIntensity={0.4}
         transparent
-        opacity={0.5}
+        opacity={0.6}
         side={THREE.DoubleSide}
-        depthWrite={false}
       />
     </mesh>
   )
 }
 
-// Оптимизированная планета с Suspense
+// ВАЖНО: без Suspense, useTexture внутри, но без async-оберток
 function Planet({ position, color, size, withRings = false, texturePath }) {
   const texture = texturePath ? useTexture(texturePath) : null
 
   return (
-    <Float speed={0.6} rotationIntensity={0.2} floatIntensity={0.2}>
+    <Float speed={0.8} rotationIntensity={0.3} floatIntensity={0.3}>
       <group position={position}>
-        <Suspense fallback={
-          <Sphere args={[size, 8, 8]}>
-            <meshBasicMaterial color={color} wireframe />
-          </Sphere>
-        }>
-          <PlanetCore map={texture} color={color} size={size} />
-        </Suspense>
+        <PlanetCore map={texture} color={color} size={size} />
         <PlanetAtmosphere color={color} size={size} />
         {withRings && <PlanetRings color={color} size={size} />}
       </group>
@@ -115,7 +121,9 @@ function Planet({ position, color, size, withRings = false, texturePath }) {
 }
 
 function PhotoFrame({ photo, position, index, total, onClick }) {
+  // photo.src уже безопасный URL (из импортов в App.jsx)
   const texture = useTexture(photo.src)
+
   const [hovered, setHovered] = useState(false)
   const meshRef = useRef()
 
@@ -144,62 +152,66 @@ function PhotoFrame({ photo, position, index, total, onClick }) {
         document.body.style.cursor = 'default'
       }}
     >
+      {/* Внешняя подсвеченная рамка */}
       <RoundedBox args={[scale * 1.55, scale * 1.25, 0.04]} radius={0.04}>
         <meshBasicMaterial
           color="#ff6b9d"
           transparent
-          opacity={hovered ? 0.5 : 0.25}
+          opacity={hovered ? 0.6 : 0.3}
           blending={THREE.AdditiveBlending}
         />
       </RoundedBox>
 
+      {/* Белая рамка под фото */}
       <RoundedBox args={[scale * 1.45, scale * 1.3, 0.02]} radius={0.03} position={[0, 0, 0.03]}>
         <meshStandardMaterial 
-          color="#ffffff" 
-          roughness={0.8} 
+          color="#ffffff"
+          roughness={0.8}
           metalness={0.08}
-          emissive={hovered ? "#ff6b9d" : "#000000"}
-          emissiveIntensity={0.2}
+          emissive={hovered ? '#ff6b9d' : '#000000'}
+          emissiveIntensity={hovered ? 0.35 : 0.15}
         />
       </RoundedBox>
 
-      <mesh position={[0, scale * 0.06, 0.05]}>
+      {/* Само фото */}
+      <mesh position={[0, scale * 0.05, 0.05]}>
         <planeGeometry args={[scale * 1.25, scale * 0.9]} />
-        <meshStandardMaterial map={texture} roughness={0.65} metalness={0.08} />
+        <meshStandardMaterial
+          // если текстура еще не прогружена, Drei сам подождёт, либо покажет fallback Canvas
+          map={texture}
+          roughness={0.6}
+          metalness={0.1}
+        />
       </mesh>
 
+      {/* Текст‑подсказка при наведении */}
       {hovered && (
-        <>
-          <Html
-            position={[0, -scale * 0.52, 0.06]}
-            distanceFactor={9}
-            occlude
-            style={{ pointerEvents: 'none' }}
+        <Html
+          position={[0, -scale * 0.55, 0.06]}
+          distanceFactor={9}
+          occlude
+          style={{ pointerEvents: 'none' }}
+        >
+          <div
+            style={{
+              maxWidth: 220,
+              textAlign: 'center',
+              fontSize: '0.7rem',
+              color: '#fff',
+              fontFamily: 'system-ui, sans-serif',
+              textShadow: '0 0 6px rgba(255,107,157,0.5)',
+              background: 'rgba(0,0,0,0.7)',
+              padding: '6px 10px',
+              borderRadius: '8px',
+            }}
           >
-            <div
-              style={{
-                width: 200,
-                textAlign: 'center',
-                fontSize: '0.68rem',
-                color: '#fff',
-                fontFamily: 'monospace',
-                textShadow: '0 0 6px rgba(255,107,157,0.5)',
-                background: 'rgba(0,0,0,0.6)',
-                padding: '4px 8px',
-                borderRadius: '6px',
-              }}
-            >
-              {photo.caption}
-            </div>
-          </Html>
-          <mesh position={[0, 0, 0.07]}>
-            <ringGeometry args={[scale * 0.9, scale * 0.95, 32]} />
-            <meshBasicMaterial color="#ff6b9d" transparent opacity={0.6} side={THREE.DoubleSide} />
-          </mesh>
-        </>
+            {photo.caption}
+          </div>
+        </Html>
       )}
 
-      <Html position={[0, scale * 0.68, 0.06]} distanceFactor={9} occlude style={{ pointerEvents: 'none' }}>
+      {/* Номер фото */}
+      <Html position={[0, scale * 0.7, 0.06]} distanceFactor={9} occlude style={{ pointerEvents: 'none' }}>
         <div
           style={{
             fontSize: '0.62rem',
@@ -536,6 +548,14 @@ function HeartParticles({ planetPosition }) {
 export default function SpaceScene({ step, photoGroups, onPhotoClick }) {
   useSmoothCamera(step)
 
+  useEffect(() => {
+    console.log('SpaceScene mounted, step:', step)
+  }, [])
+
+  useEffect(() => {
+    console.log('SpaceScene step changed:', step, 'photoGroups[step]:', photoGroups[step])
+  }, [step, photoGroups])
+
   const planetConfigs = {
     1: {
       position: [-28, 0, -18],
@@ -573,64 +593,61 @@ export default function SpaceScene({ step, photoGroups, onPhotoClick }) {
 
   return (
     <>
-      <ambientLight intensity={0.3} />
-      <pointLight position={[50, 50, 50]} intensity={3} color="#ffffff" />
-      <pointLight position={[-40, -40, -30]} intensity={2} color="#c471ed" />
-      <spotLight position={[0, 40, 40]} intensity={2.2} angle={0.4} penumbra={1} color="#ff6b9d" castShadow={false} />
-      <spotLight position={[0, -25, 25]} intensity={1.3} angle={0.5} penumbra={1} color="#ffd700" castShadow={false} />
+      <ambientLight intensity={0.4} />
+      <pointLight position={[50, 50, 50]} intensity={3.5} color="#ffffff" />
+      <pointLight position={[-40, -40, -30]} intensity={2.5} color="#c471ed" />
+      <spotLight position={[0, 40, 40]} intensity={2.5} angle={0.4} penumbra={1} color="#ff6b9d" />
+      <spotLight position={[0, -25, 25]} intensity={1.5} angle={0.5} penumbra={1} color="#ffd700" />
 
       <Stars 
         radius={350}
         depth={150}
-        count={15000} // Уменьшил с 25000 до 15000
-        factor={4}
+        count={20000}
+        factor={4.5}
         saturation={0} 
         fade={true}
-        speed={0.6} 
+        speed={0.7} 
       />
 
       <FloatingDust />
-      {[...Array(4)].map((_, i) => ( // Уменьшил с 6 до 4
+      
+      {[...Array(6)].map((_, i) => (
         <ShootingStar key={i} />
       ))}
 
-      {/* 5 летающих сердечек вместо 8 */}
-      {[...Array(5)].map((_, i) => (
-        <FlyingStarHeart key={`heart-${i}`} delay={i * 1.8} />
+      {[...Array(10)].map((_, i) => (
+        <FlyingStarHeart key={`heart-${i}`} delay={i * 1.5} />
       ))}
 
-      <Suspense fallback={null}>
-        <Planet {...planetConfigs[1]} />
-        <Planet {...planetConfigs[2]} />
-        <Planet {...planetConfigs[3]} />
-        <Planet {...planetConfigs[4]} />
-      </Suspense>
+      {/* Планеты с текстурами */}
+      <Planet {...planetConfigs[1]} />
+      <Planet {...planetConfigs[2]} />
+      <Planet {...planetConfigs[3]} />
+      <Planet {...planetConfigs[4]} />
 
-      {step >= 1 && step <= 3 && (
-        <Suspense fallback={null}>
-          <PhotoRing
-            photos={photoGroups[step] || []}
-            planetPosition={planetConfigs[step].position}
-            onPhotoClick={onPhotoClick}
-            offset={planetConfigs[step].offset}
-          />
-        </Suspense>
+      {/* Фотографии появляются только на нужных шагах */}
+      {step >= 1 && step <= 3 && Array.isArray(photoGroups[step]) && photoGroups[step].length > 0 && (
+        <PhotoRing
+          photos={photoGroups[step]}
+          planetPosition={planetConfigs[step].position}
+          onPhotoClick={onPhotoClick}
+          offset={planetConfigs[step].offset}
+        />
       )}
 
+      {/* Финальная планета со спецэффектами */}
       {step === 4 && (
         <>
           <PulsingRing planetPosition={planetConfigs[4].position} size={planetConfigs[4].size} />
-          <OrbitalLights planetPosition={planetConfigs[4].position} radius={13} count={8} /> {/* Уменьшил с 12 до 8 */}
+          <OrbitalLights planetPosition={planetConfigs[4].position} radius={13} count={12} />
           <HeartParticles planetPosition={planetConfigs[4].position} />
 
           <spotLight
             position={[0, 32, -26]}
-            target-position={planetConfigs[4].position}
-            intensity={2.2}
-            angle={0.18}
+            intensity={2.5}
+            angle={0.2}
             penumbra={0.9}
             color="#ffffff"
-            castShadow={false}
           />
         </>
       )}
