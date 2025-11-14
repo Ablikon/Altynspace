@@ -446,7 +446,31 @@ function FlyingStarHeart({ delay = 0 }) {
   )
 }
 
-// Сердце из частиц вокруг финальной планеты
+// Тонкое пульсирующее кольцо
+function PulsingRing({ planetPosition, size }) {
+  const ringRef = useRef()
+
+  useFrame((state) => {
+    if (!ringRef.current) return
+    const pulse = Math.sin(state.clock.elapsedTime * 1.0) * 0.1 + 1
+    ringRef.current.scale.set(pulse, pulse, pulse)
+    ringRef.current.rotation.z = state.clock.elapsedTime * 0.25
+  })
+
+  return (
+    <mesh ref={ringRef} position={planetPosition} rotation={[Math.PI / 2, 0, 0]}>
+      <torusGeometry args={[size * 1.4, size * 0.05, 24, 48]} />
+      <meshBasicMaterial
+        color="#ff6b9d"
+        transparent
+        opacity={0.2}
+        blending={THREE.AdditiveBlending}
+      />
+    </mesh>
+  )
+}
+
+// Сердце из красных частиц (главный акцент)
 function HeartParticles({ planetPosition }) {
   const particlesRef = useRef()
   
@@ -455,17 +479,17 @@ function HeartParticles({ planetPosition }) {
     const heartShape = (t) => {
       const x = 16 * Math.pow(Math.sin(t), 3)
       const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)
-      return [x * 0.45, y * 0.45]
+      return [x * 0.6, y * 0.6]
     }
 
-    for (let i = 0; i < 200; i++) { // Уменьшил с 350 до 200
-      const t = (i / 200) * Math.PI * 2
+    for (let i = 0; i < 300; i++) {
+      const t = (i / 300) * Math.PI * 2
       const [hx, hy] = heartShape(t)
-      const randomOffset = (Math.random() - 0.5) * 0.6
+      const randomOffset = (Math.random() - 0.5) * 0.9
       temp.push(
         planetPosition[0] + hx + randomOffset,
         planetPosition[1] + hy + randomOffset,
-        planetPosition[2] + (Math.random() - 0.5) * 2.5
+        planetPosition[2] + (Math.random() - 0.5) * 3.5
       )
     }
     return new Float32Array(temp)
@@ -473,8 +497,11 @@ function HeartParticles({ planetPosition }) {
 
   useFrame((state) => {
     if (!particlesRef.current) return
-    particlesRef.current.rotation.z = Math.sin(state.clock.elapsedTime * 0.25) * 0.25
+    particlesRef.current.rotation.z = Math.sin(state.clock.elapsedTime * 0.2) * 0.3
     particlesRef.current.rotation.y = state.clock.elapsedTime * 0.06
+    
+    const pulse = Math.sin(state.clock.elapsedTime * 1.0) * 0.1 + 1
+    particlesRef.current.scale.setScalar(pulse)
   })
 
   return (
@@ -488,10 +515,10 @@ function HeartParticles({ planetPosition }) {
         />
       </bufferGeometry>
       <pointsMaterial
-        size={0.15}
+        size={0.18}
         color="#ff1744"
         transparent
-        opacity={0.85}
+        opacity={0.95}
         sizeAttenuation
         blending={THREE.AdditiveBlending}
       />
@@ -581,35 +608,23 @@ export default function SpaceScene({ step, photoGroups, onPhotoClick }) {
 
       {step === 4 && (
         <>
-          <group position={planetConfigs[4].position}>
-            <Sphere args={[planetConfigs[4].size * 1.5, 24, 24]}> {/* Уменьшил детализацию */}
-              <meshBasicMaterial
-                color="#ff6b9d"
-                transparent
-                opacity={0.08}
-                blending={THREE.AdditiveBlending}
-              />
-            </Sphere>
-            <Sphere args={[planetConfigs[4].size * 1.9, 24, 24]}>
-              <meshBasicMaterial
-                color="#c471ed"
-                transparent
-                opacity={0.05}
-                blending={THREE.AdditiveBlending}
-              />
-            </Sphere>
-          </group>
-
-          <OrbitalLights planetPosition={planetConfigs[4].position} radius={10} count={16} /> {/* Уменьшил с 20 до 16 */}
+          {/* Только тонкое кольцо */}
+          <PulsingRing planetPosition={planetConfigs[4].position} size={planetConfigs[4].size} />
+          
+          {/* Меньше орбитальных огней */}
+          <OrbitalLights planetPosition={planetConfigs[4].position} radius={13} count={12} />
+          
+          {/* Красное сердце - ГЛАВНЫЙ АКЦЕНТ */}
           <HeartParticles planetPosition={planetConfigs[4].position} />
 
+          {/* Один белый свет сверху */}
           <spotLight
-            position={[0, 25, -35]}
+            position={[0, 32, -26]}
             target-position={planetConfigs[4].position}
-            intensity={3.5}
-            angle={0.25}
+            intensity={2.2}
+            angle={0.18}
             penumbra={0.9}
-            color="#ff6b9d"
+            color="#ffffff"
           />
         </>
       )}
