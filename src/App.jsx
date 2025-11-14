@@ -1,17 +1,16 @@
 import { useState } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls } from '@react-three/drei'
 import { motion, AnimatePresence } from 'framer-motion'
+import { OrbitControls } from '@react-three/drei'
 import './App.css'
 import SpaceScene from './components/SpaceScene'
-import PhotoGallery from './components/PhotoGallery'
 
 function App() {
+  const [step, setStep] = useState(0)
   const [currentMessage, setCurrentMessage] = useState(0)
   const [showStart, setShowStart] = useState(true)
   const [selectedPhoto, setSelectedPhoto] = useState(null)
 
-  // 27 фотографий с креативными подписями
   const photos = [
     { src: '/gallery/photo1.JPG', caption: 'Момент, когда я понял, что ты - моя судьба 💫' },
     { src: '/gallery/photo2.JPG', caption: 'Твоя улыбка освещает даже самые темные дни ✨' },
@@ -42,121 +41,309 @@ function App() {
     { src: '/gallery/photo27.png', caption: 'Я люблю тебя больше, чем звезд на небе 🌃' },
   ]
 
+  const photoGroups = {
+    1: photos.slice(0, 7),
+    2: photos.slice(7, 17),
+    3: photos.slice(17, 27),
+  }
+
   const messages = [
     {
-      title: "Привет, Алтынай! 💫",
-      text: "Добро пожаловать в нашу личную галактику. Каждая планета хранит наши воспоминания.",
-      action: null
+      title: 'Старт путешествия 🚀',
+      text: 'Мы взлетаем из темной космической пустоты навстречу нашей галактике воспоминаний.',
     },
     {
-      title: "Наша вселенная любви 🌌",
-      text: "Посмотри вокруг - фотографии вращаются вокруг планет как спутники. Кликни на любую чтобы увидеть поближе!",
-      action: null
+      title: 'Глава 1. Начало 💫',
+      text: 'Первая планета слева хранит наши самые первые моменты. Кликай на фото чтобы увидеть.',
     },
     {
-      title: "27 орбит счастья ✨",
-      text: "Каждая фотография на своей орбите вокруг планет. Это символ того, как наши воспоминания вращаются вокруг нашей любви.",
-      action: null
+      title: 'Глава 2. Наш космос 🌌',
+      text: 'Планета справа — это наше счастье, смех и те дни, когда мир будто замирал.',
     },
     {
-      title: "Спасибо за всё 💝",
-      text: "За твою улыбку, поддержку и любовь. Ты делаешь мою жизнь ярче всех звезд на небе.",
-      action: null
+      title: 'Глава 3. Мечты и будущее ✨',
+      text: 'Центральная планета глубже — здесь наши мечты и то, к чему мы идём вместе.',
     },
     {
-      title: "Я люблю тебя 💖",
-      text: "Сильнее, чем гравитация притягивает планеты. Ты - моя единственная и неповторимая.",
-      action: null
-    }
+      title: 'Финал. Ты — моя вселенная 💖',
+      text: 'Как бы далеко мы ни улетали, центр моей вселенной — это ты, Алтынай.',
+    },
   ]
 
-  const handleStart = () => {
-    setShowStart(false)
+  const handlePhotoClick = (globalIndex) => {
+    setSelectedPhoto(globalIndex)
   }
 
-  const handlePhotoClick = (photoIndex) => {
-    setSelectedPhoto(photoIndex)
+  const closePhoto = () => {
+    setSelectedPhoto(null)
   }
 
-  const nextMessage = () => {
-    if (messages[currentMessage].action) {
-      messages[currentMessage].action()
-    } else {
-      setCurrentMessage((prev) => (prev + 1) % messages.length)
-    }
+  const nextPhoto = (e) => {
+    e.stopPropagation()
+    setSelectedPhoto((prev) => (prev + 1) % photos.length)
+  }
+
+  const prevPhoto = (e) => {
+    e.stopPropagation()
+    setSelectedPhoto((prev) => (prev - 1 + photos.length) % photos.length)
   }
 
   return (
     <>
       <div className="canvas-container">
-        <Canvas camera={{ position: [0, 0, 8], fov: 60 }}>
-          <SpaceScene photos={photos} onPhotoClick={handlePhotoClick} />
+        <Canvas camera={{ position: [0, 8, 42], fov: 50 }}>
+          <SpaceScene
+            step={step}
+            photoGroups={photoGroups}
+            onPhotoClick={handlePhotoClick}
+          />
           <OrbitControls
             enableZoom={true}
-            minDistance={5}
-            maxDistance={15}
+            minDistance={8}
+            maxDistance={40}
             enablePan={false}
-            autoRotate
-            autoRotateSpeed={0.2}
+            enableRotate={true}
+            autoRotate={false}
           />
         </Canvas>
       </div>
 
       <div className="ui-overlay">
-        <AnimatePresence mode="wait">
-          {showStart ? (
-            <motion.div
-              key="start"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              className="message-card"
-            >
-              <h2>Для самой лучшей Алтынай 💝</h2>
-              <p>Я создал для тебя целую вселенную наших воспоминаний...</p>
-              <p style={{ fontSize: '0.9rem', marginTop: '1rem', opacity: 0.8 }}>
-                Приготовься к путешествию через космос нашей любви 🚀
-              </p>
-              <button className="planet-button" onClick={handleStart}>
-                Начать путешествие ✨
-              </button>
-            </motion.div>
-          ) : (
-            <motion.div
-              key={currentMessage}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="message-card"
-            >
-              <h2>{messages[currentMessage].title}</h2>
-              <p>{messages[currentMessage].text}</p>
-              <button className="planet-button" onClick={nextMessage}>
-                {messages[currentMessage].buttonText || 
-                 (currentMessage === messages.length - 1 ? 'Начать сначала ♻️' : 'Дальше ✨')}
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <div style={{ marginTop: '1.5rem' }}>
+          <AnimatePresence mode="wait">
+            {showStart ? (
+              <motion.div
+                key="start"
+                initial={{ opacity: 0, scale: 0.8, y: -10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.8, y: -20 }}
+                className="message-card"
+              >
+                <h2>Для самой лучшей Алтынай 💝</h2>
+                <p>Я сделал для тебя космическое путешествие по нашей истории.</p>
+                <p style={{ fontSize: '0.9rem', marginTop: '1rem', opacity: 0.8 }}>
+                  Лети вперед по главам, приближай планеты и рассмотри наши моменты в космосе.
+                </p>
+                <button className="planet-button" onClick={() => { setShowStart(false); setStep(0); setCurrentMessage(0); }}>
+                  Взлететь 🚀
+                </button>
+              </motion.div>
+            ) : (
+              <motion.div
+                key={currentMessage}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="message-card"
+              >
+                <h2>{messages[currentMessage].title}</h2>
+                <p>{messages[currentMessage].text}</p>
+                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', marginTop: '0.5rem' }}>
+                  <button
+                    className="planet-button"
+                    style={{ opacity: step === 0 ? 0.4 : 1 }}
+                    onClick={() => { setStep(Math.max(step - 1, 0)); setCurrentMessage(Math.max(currentMessage - 1, 0)); }}
+                    disabled={step === 0}
+                  >
+                    Назад
+                  </button>
+                  <button
+                    className="planet-button"
+                    onClick={() => { 
+                      if (step === 4) { setStep(0); setCurrentMessage(0); } 
+                      else { setStep(Math.min(step + 1, 4)); setCurrentMessage(Math.min(currentMessage + 1, messages.length - 1)); }
+                    }}
+                  >
+                    {step === 4 ? 'Повторить ♻️' : 'Дальше ✨'}
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
         {!showStart && (
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 1 }}
+            transition={{ delay: 0.6 }}
             className="instructions"
           >
-            Вращай космос и кликай на фото! 🌟
+            Свайпай экран / верти телефон, приближай планеты и кликай на фото 🌟
           </motion.p>
         )}
       </div>
 
-      <PhotoGallery 
-        isOpen={selectedPhoto !== null} 
-        onClose={() => setSelectedPhoto(null)}
-        photos={photos}
-        initialPhoto={selectedPhoto || 0}
-      />
+      {/* Просмотр фото */}
+      <AnimatePresence>
+        {selectedPhoto !== null && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100vw',
+              height: '100vh',
+              background: 'rgba(0, 0, 0, 0.95)',
+              zIndex: 1000,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            onClick={closePhoto}
+          >
+            <motion.div
+              initial={{ scale: 0.3, rotateY: 90 }}
+              animate={{ scale: 1, rotateY: 0 }}
+              exit={{ scale: 0.3, rotateY: -90 }}
+              transition={{ type: 'spring', stiffness: 120, damping: 18 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                position: 'relative',
+                maxWidth: '90vw',
+                maxHeight: '90vh',
+              }}
+            >
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(255,107,157,0.1), rgba(196,113,237,0.1))',
+                backdropFilter: 'blur(20px)',
+                border: '3px solid #ff6b9d',
+                borderRadius: '20px',
+                padding: '2rem',
+                boxShadow: '0 0 80px rgba(255,107,157,0.6), inset 0 0 60px rgba(255,107,157,0.2)',
+              }}>
+                <img 
+                  src={photos[selectedPhoto].src}
+                  alt={photos[selectedPhoto].caption}
+                  style={{
+                    maxWidth: '70vw',
+                    maxHeight: '60vh',
+                    borderRadius: '12px',
+                    display: 'block',
+                    objectFit: 'contain',
+                  }}
+                />
+                <p style={{
+                  color: '#fff',
+                  textAlign: 'center',
+                  marginTop: '1.5rem',
+                  fontSize: '1.3rem',
+                  textShadow: '0 0 15px rgba(255,107,157,0.8)',
+                  maxWidth: '600px',
+                  margin: '1.5rem auto 0',
+                }}>
+                  {photos[selectedPhoto].caption}
+                </p>
+              </div>
+
+              {/* Крестик */}
+              <button
+                onClick={closePhoto}
+                style={{
+                  position: 'absolute',
+                  top: '1rem',
+                  right: '1rem',
+                  background: 'rgba(255,107,157,0.3)',
+                  border: '2px solid #ff6b9d',
+                  color: '#fff',
+                  width: '50px',
+                  height: '50px',
+                  borderRadius: '50%',
+                  fontSize: '1.5rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  lineHeight: '1',
+                  padding: 0,
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,107,157,0.6)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,107,157,0.3)'}
+              >
+                ✕
+              </button>
+
+              {/* Стрелка влево */}
+              <button
+                onClick={prevPhoto}
+                style={{
+                  position: 'absolute',
+                  left: '1rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'rgba(255,107,157,0.3)',
+                  border: '2px solid #ff6b9d',
+                  color: '#fff',
+                  width: '50px',
+                  height: '50px',
+                  borderRadius: '50%',
+                  fontSize: '2rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  lineHeight: '1',
+                  padding: 0,
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,107,157,0.6)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,107,157,0.3)'}
+              >
+                ‹
+              </button>
+
+              {/* Стрелка вправо */}
+              <button
+                onClick={nextPhoto}
+                style={{
+                  position: 'absolute',
+                  right: '1rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'rgba(255,107,157,0.3)',
+                  border: '2px solid #ff6b9d',
+                  color: '#fff',
+                  width: '50px',
+                  height: '50px',
+                  borderRadius: '50%',
+                  fontSize: '2rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  lineHeight: '1',
+                  padding: 0,
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,107,157,0.6)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,107,157,0.3)'}
+              >
+                ›
+              </button>
+
+              {/* Счетчик */}
+              <div style={{
+                position: 'absolute',
+                bottom: '1rem',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                fontSize: '0.9rem',
+                color: 'rgba(255,255,255,0.8)',
+                background: 'rgba(0,0,0,0.5)',
+                padding: '0.5rem 1rem',
+                borderRadius: '20px',
+              }}>
+                {selectedPhoto + 1} / {photos.length}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   )
 }
