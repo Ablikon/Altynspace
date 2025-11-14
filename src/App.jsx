@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { motion, AnimatePresence } from 'framer-motion'
 import { OrbitControls } from '@react-three/drei'
@@ -10,6 +10,18 @@ function App() {
   const [currentMessage, setCurrentMessage] = useState(0)
   const [showStart, setShowStart] = useState(true)
   const [selectedPhoto, setSelectedPhoto] = useState(null)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   const photos = [
     { src: '/gallery/photo1.JPG', caption: 'Момент, когда я понял, что ты - моя судьба 💫' },
@@ -91,7 +103,7 @@ function App() {
   return (
     <>
       <div className="canvas-container">
-        <Canvas camera={{ position: [0, 8, 42], fov: 50 }}>
+        <Canvas camera={{ position: [0, 8, 42], fov: isMobile ? 60 : 50 }}>
           <SpaceScene
             step={step}
             photoGroups={photoGroups}
@@ -99,11 +111,12 @@ function App() {
           />
           <OrbitControls
             enableZoom={true}
-            minDistance={8}
-            maxDistance={40}
+            minDistance={isMobile ? 10 : 8}
+            maxDistance={isMobile ? 50 : 40}
             enablePan={false}
             enableRotate={true}
             autoRotate={false}
+            rotateSpeed={isMobile ? 0.5 : 1}
           />
         </Canvas>
       </div>
@@ -174,7 +187,7 @@ function App() {
         )}
       </div>
 
-      {/* Просмотр фото */}
+      {/* Просмотр фото - ПОЛНОСТЬЮ АДАПТИВНАЯ ВЕРСИЯ */}
       <AnimatePresence>
         {selectedPhoto !== null && (
           <motion.div
@@ -193,6 +206,8 @@ function App() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              padding: isMobile ? '0.5rem' : '1rem',
+              boxSizing: 'border-box',
             }}
             onClick={closePhoto}
           >
@@ -204,37 +219,52 @@ function App() {
               onClick={(e) => e.stopPropagation()}
               style={{
                 position: 'relative',
-                maxWidth: '90vw',
-                maxHeight: '90vh',
+                width: '100%',
+                height: '100%',
+                maxWidth: isMobile ? '100%' : '900px',
+                maxHeight: isMobile ? '100%' : '90vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
               <div style={{
                 background: 'linear-gradient(135deg, rgba(255,107,157,0.1), rgba(196,113,237,0.1))',
                 backdropFilter: 'blur(20px)',
                 border: '3px solid #ff6b9d',
-                borderRadius: '20px',
-                padding: '2rem',
+                borderRadius: isMobile ? '16px' : '20px',
+                padding: isMobile ? '1rem 0.5rem' : '2rem',
                 boxShadow: '0 0 80px rgba(255,107,157,0.6), inset 0 0 60px rgba(255,107,157,0.2)',
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
               }}>
                 <img 
                   src={photos[selectedPhoto].src}
                   alt={photos[selectedPhoto].caption}
                   style={{
-                    maxWidth: '70vw',
-                    maxHeight: '60vh',
+                    width: '100%',
+                    height: 'auto',
+                    maxWidth: '100%',
+                    maxHeight: isMobile ? '60vh' : '65vh',
                     borderRadius: '12px',
-                    display: 'block',
                     objectFit: 'contain',
+                    marginBottom: isMobile ? '0.5rem' : '1rem',
                   }}
                 />
                 <p style={{
                   color: '#fff',
                   textAlign: 'center',
-                  marginTop: '1.5rem',
-                  fontSize: '1.3rem',
+                  fontSize: isMobile ? '0.85rem' : '1.2rem',
                   textShadow: '0 0 15px rgba(255,107,157,0.8)',
-                  maxWidth: '600px',
-                  margin: '1.5rem auto 0',
+                  padding: isMobile ? '0.5rem' : '0 1rem',
+                  lineHeight: isMobile ? '1.3' : '1.5',
+                  maxHeight: isMobile ? '15vh' : 'auto',
+                  overflow: 'auto',
                 }}>
                   {photos[selectedPhoto].caption}
                 </p>
@@ -245,25 +275,23 @@ function App() {
                 onClick={closePhoto}
                 style={{
                   position: 'absolute',
-                  top: '1rem',
-                  right: '1rem',
-                  background: 'rgba(255,107,157,0.3)',
+                  top: isMobile ? '0.3rem' : '1rem',
+                  right: isMobile ? '0.3rem' : '1rem',
+                  background: 'rgba(255,107,157,0.4)',
                   border: '2px solid #ff6b9d',
                   color: '#fff',
-                  width: '50px',
-                  height: '50px',
+                  width: isMobile ? '35px' : '50px',
+                  height: isMobile ? '35px' : '50px',
                   borderRadius: '50%',
-                  fontSize: '1.5rem',
+                  fontSize: isMobile ? '1.1rem' : '1.5rem',
                   cursor: 'pointer',
                   transition: 'all 0.3s',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  lineHeight: '1',
-                  padding: 0,
+                  zIndex: 20,
+                  fontWeight: 'bold',
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,107,157,0.6)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,107,157,0.3)'}
               >
                 ✕
               </button>
@@ -273,26 +301,23 @@ function App() {
                 onClick={prevPhoto}
                 style={{
                   position: 'absolute',
-                  left: '1rem',
+                  left: isMobile ? '0.3rem' : '1rem',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  background: 'rgba(255,107,157,0.3)',
+                  background: 'rgba(255,107,157,0.4)',
                   border: '2px solid #ff6b9d',
                   color: '#fff',
-                  width: '50px',
-                  height: '50px',
+                  width: isMobile ? '35px' : '50px',
+                  height: isMobile ? '35px' : '50px',
                   borderRadius: '50%',
-                  fontSize: '2rem',
+                  fontSize: isMobile ? '1.3rem' : '2rem',
                   cursor: 'pointer',
                   transition: 'all 0.3s',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  lineHeight: '1',
-                  padding: 0,
+                  zIndex: 20,
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,107,157,0.6)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,107,157,0.3)'}
               >
                 ‹
               </button>
@@ -302,26 +327,23 @@ function App() {
                 onClick={nextPhoto}
                 style={{
                   position: 'absolute',
-                  right: '1rem',
+                  right: isMobile ? '0.3rem' : '1rem',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  background: 'rgba(255,107,157,0.3)',
+                  background: 'rgba(255,107,157,0.4)',
                   border: '2px solid #ff6b9d',
                   color: '#fff',
-                  width: '50px',
-                  height: '50px',
+                  width: isMobile ? '35px' : '50px',
+                  height: isMobile ? '35px' : '50px',
                   borderRadius: '50%',
-                  fontSize: '2rem',
+                  fontSize: isMobile ? '1.3rem' : '2rem',
                   cursor: 'pointer',
                   transition: 'all 0.3s',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  lineHeight: '1',
-                  padding: 0,
+                  zIndex: 20,
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,107,157,0.6)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,107,157,0.3)'}
               >
                 ›
               </button>
@@ -329,14 +351,16 @@ function App() {
               {/* Счетчик */}
               <div style={{
                 position: 'absolute',
-                bottom: '1rem',
+                bottom: isMobile ? '0.3rem' : '1rem',
                 left: '50%',
                 transform: 'translateX(-50%)',
-                fontSize: '0.9rem',
-                color: 'rgba(255,255,255,0.8)',
-                background: 'rgba(0,0,0,0.5)',
-                padding: '0.5rem 1rem',
+                fontSize: isMobile ? '0.7rem' : '0.9rem',
+                color: 'rgba(255,255,255,0.9)',
+                background: 'rgba(0,0,0,0.7)',
+                padding: isMobile ? '0.3rem 0.7rem' : '0.5rem 1rem',
                 borderRadius: '20px',
+                zIndex: 20,
+                fontWeight: '600',
               }}>
                 {selectedPhoto + 1} / {photos.length}
               </div>
