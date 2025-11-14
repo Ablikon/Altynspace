@@ -14,15 +14,13 @@ export default defineConfig({
       }
     },
     chunkSizeWarningLimit: 1000,
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true
-      }
-    }
+    minify: 'esbuild', // Используем esbuild вместо terser (быстрее)
+    target: 'es2015',
+    cssCodeSplit: true,
+    sourcemap: false, // Отключаем sourcemap для production
+    assetsInlineLimit: 4096 // Инлайним маленькие файлы
   },
   optimizeDeps: {
-    include: ['three', '@react-three/fiber', '@react-three/drei']
+    include: ['three', '@react-three/fiber', '@react-three/drei', 'framer-motion']
   }
 })
