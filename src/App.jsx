@@ -1,4 +1,4 @@
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { motion, AnimatePresence } from 'framer-motion'
 import { OrbitControls } from '@react-three/drei'
@@ -160,7 +160,7 @@ function App() {
     '',
     'Я пролетел через целую вселенную, чтобы сказать тебе то, что мое сердце шепчет каждый день.',
     '',
-    'Ты знаешь, я не всегда нахожу правильные слова. Но рядом с тобой мне и не нужно — ты чувствуешь все без слов.',
+    'Ты знаешь, я не всегда нахожу правильные слова. Но рядом с тобой мне и не нужно - ты чувствуешь все без слов.',
     '',
     'Спасибо, что ты смеешься так, что весь мир замирает.',
     'Спасибо, что обнимаешь так, будто ничего больше не существует.',
@@ -168,14 +168,14 @@ function App() {
     '',
     'С тобой обычный вечер становится лучшим воспоминанием.',
     'С тобой тишина звучит красивее любой музыки.',
-    'С тобой я наконец понял, что значит — быть дома.',
+    'С тобой я наконец понял, что значит «быть дома».',
     '',
-    'Ты — мое утро и мой закат.',
-    'Ты — моя самая красивая случайность и моя самая важная неизбежность.',
+    'Ты - мое утро и мой закат.',
+    'Ты - моя самая красивая случайность и моя самая важная неизбежность.',
     '',
-    'Эта вселенная, которую я создал — лишь маленькое отражение того, что я чувствую к тебе. Настоящая вселенная моей любви не поместится ни в какой экран.',
+    'Эта вселенная, которую я создал - лишь маленькое отражение того, что я чувствую к тебе. Настоящая вселенная моей любви не поместится ни в какой экран.',
     '',
-    'Я люблю тебя, Алтынай. Вчера, сегодня, завтра — и через миллиард световых лет.',
+    'Я люблю тебя, Алтынай. Вчера, сегодня, завтра - и через миллиард световых лет.',
     '',
     'Навсегда твой ❤️',
   ]
@@ -194,6 +194,21 @@ function App() {
   const [portalActive, setPortalActive] = useState(false)
   const [letterVisible, setLetterVisible] = useState(false)
   const [epilogueActive, setEpilogueActive] = useState(false)
+  const letterContainerRef = useRef(null)
+
+  useEffect(() => {
+    if (!letterVisible) return
+    const totalDelay = (1.0 + letterLines.length * 0.35 + 1.0) * 1000
+    const scrollTimer = setTimeout(() => {
+      if (letterContainerRef.current) {
+        letterContainerRef.current.scrollTo({
+          top: letterContainerRef.current.scrollHeight,
+          behavior: 'smooth',
+        })
+      }
+    }, totalDelay)
+    return () => clearTimeout(scrollTimer)
+  }, [letterVisible])
 
   const handleNextStep = () => {
     if (step === TOTAL_STEPS) {
@@ -251,6 +266,7 @@ function App() {
               transition={{ duration: 1.5 }}
             >
               <motion.div
+                ref={letterContainerRef}
                 className="letter-container"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
