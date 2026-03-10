@@ -316,7 +316,7 @@ function App() {
       </div>
 
       <div className="ui-overlay">
-        <div style={{ marginTop: '1.5rem' }}>
+        <div style={{ marginTop: '0.5rem' }}>
           <AnimatePresence mode="wait">
             {showStart ? (
               <motion.div
@@ -328,7 +328,7 @@ function App() {
               >
                 <h2>Для самой лучшей Алтынай 💝</h2>
                 <p>Я сделал для тебя космическое путешествие по нашей истории.</p>
-                <p style={{ fontSize: '0.9rem', marginTop: '1rem', opacity: 0.8 }}>
+                <p style={{ fontSize: '0.85rem', marginTop: '0.8rem', opacity: 0.8, lineHeight: 1.5 }}>
                   Лети вперед по главам, приближай планеты и рассмотри наши моменты в космосе.
                 </p>
                 <button
