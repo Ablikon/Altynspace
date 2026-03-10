@@ -39,8 +39,8 @@ function useSmoothCamera(step) {
     2: { pos: [20, 4, -19], look: [20, -3, -35] },
     3: { pos: [-10, -2, -44], look: [-10, -10, -60] },
     4: { pos: [-25, -2, -78], look: [-25, -5, -90] },
-    5: { pos: [18, -9, -103], look: [18, -12, -115] },
-    6: { pos: [0, 8, -132], look: [0, 5, -145] },
+    5: { pos: [18, -10, -106], look: [18, -12, -115] },
+    6: { pos: [0, 7, -135], look: [0, 5, -145] },
   }
 
   useFrame(() => {
@@ -1154,23 +1154,33 @@ function HeartParticles({ planetPosition }) {
 
 function FloatingOrb({ position, color, size = 0.15, speed = 1 }) {
   const ref = useRef()
+  const ringRef = useRef()
   const startY = position[1]
   useFrame((state) => {
-    if (ref.current) {
-      const t = state.clock.elapsedTime * speed
-      ref.current.position.y = startY + Math.sin(t * 0.5) * 1.5
-      ref.current.position.x = position[0] + Math.sin(t * 0.3) * 0.8
+    if (!ref.current) return
+    const t = state.clock.elapsedTime * speed
+    ref.current.position.y = startY + Math.sin(t * 0.5) * 1.5
+    ref.current.position.x = position[0] + Math.sin(t * 0.3) * 0.8
+    const pulse = Math.sin(t * 2) * 0.15 + 1
+    ref.current.children[1].scale.setScalar(pulse)
+    if (ringRef.current) {
+      ringRef.current.rotation.x = t * 0.8
+      ringRef.current.rotation.z = t * 0.5
     }
   })
   return (
     <group ref={ref} position={position}>
       <mesh>
-        <sphereGeometry args={[size, 12, 12]} />
-        <meshBasicMaterial color={color} />
+        <sphereGeometry args={[size * 0.5, 12, 12]} />
+        <meshStandardMaterial color="#ffffff" emissive={color} emissiveIntensity={2} />
       </mesh>
       <mesh>
-        <sphereGeometry args={[size * 3, 12, 12]} />
-        <meshBasicMaterial color={color} transparent opacity={0.18} blending={THREE.AdditiveBlending} depthWrite={false} />
+        <sphereGeometry args={[size * 2, 12, 12]} />
+        <meshBasicMaterial color={color} transparent opacity={0.12} blending={THREE.AdditiveBlending} depthWrite={false} />
+      </mesh>
+      <mesh ref={ringRef}>
+        <ringGeometry args={[size * 1.5, size * 1.8, 24]} />
+        <meshBasicMaterial color={color} transparent opacity={0.15} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} />
       </mesh>
     </group>
   )
@@ -1186,7 +1196,7 @@ function FloatingOrbs({ count = 15 }) {
         Math.random() * -280 + 30,
       ],
       color: colors[Math.floor(Math.random() * colors.length)],
-      size: 0.08 + Math.random() * 0.12,
+      size: 0.1 + Math.random() * 0.15,
       speed: 0.5 + Math.random() * 1,
     }))
   }, [count])
@@ -1202,6 +1212,7 @@ function FloatingOrbs({ count = 15 }) {
 
 function TinyMoon({ planetPosition, orbitRadius, speed, size = 0.3, color = '#aaaacc' }) {
   const ref = useRef()
+  const ringRef = useRef()
   useFrame((state) => {
     if (ref.current) {
       const t = state.clock.elapsedTime * speed
@@ -1211,12 +1222,27 @@ function TinyMoon({ planetPosition, orbitRadius, speed, size = 0.3, color = '#aa
         planetPosition[2] + Math.sin(t) * orbitRadius,
       )
     }
+    if (ringRef.current) {
+      const t = state.clock.elapsedTime * speed
+      ringRef.current.rotation.x = t * 1.2
+      ringRef.current.rotation.z = t * 0.7
+    }
   })
   return (
-    <mesh ref={ref}>
-      <sphereGeometry args={[size, 16, 16]} />
-      <meshStandardMaterial color={color} roughness={0.9} metalness={0.05} emissive={color} emissiveIntensity={0.05} />
-    </mesh>
+    <group ref={ref}>
+      <mesh>
+        <sphereGeometry args={[size * 0.6, 16, 16]} />
+        <meshStandardMaterial color="#ffffff" emissive={color} emissiveIntensity={1.5} />
+      </mesh>
+      <mesh>
+        <sphereGeometry args={[size * 1.5, 16, 16]} />
+        <meshBasicMaterial color={color} transparent opacity={0.1} blending={THREE.AdditiveBlending} depthWrite={false} />
+      </mesh>
+      <mesh ref={ringRef}>
+        <ringGeometry args={[size * 1.0, size * 1.25, 32]} />
+        <meshBasicMaterial color={color} transparent opacity={0.2} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} />
+      </mesh>
+    </group>
   )
 }
 
@@ -1257,6 +1283,57 @@ function ParticleStream({ from, to, color = '#c471ed', count = 60 }) {
         depthWrite={false}
       />
     </points>
+  )
+}
+
+function StarCluster({ position, color = '#aabbdd', count = 80, spread = 3 }) {
+  const points = useMemo(() => {
+    const pos = []
+    for (let i = 0; i < count; i++) {
+      const r = Math.pow(Math.random(), 2) * spread
+      const theta = Math.random() * Math.PI * 2
+      const phi = (Math.random() - 0.5) * Math.PI
+      pos.push(
+        Math.cos(theta) * Math.cos(phi) * r,
+        Math.sin(phi) * r,
+        Math.sin(theta) * Math.cos(phi) * r,
+      )
+    }
+    return new Float32Array(pos)
+  }, [count, spread])
+
+  return (
+    <points position={position}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" count={count} array={points} itemSize={3} />
+      </bufferGeometry>
+      <pointsMaterial
+        map={spriteTexture} size={0.15} color={color} transparent opacity={0.7}
+        sizeAttenuation blending={THREE.AdditiveBlending} depthWrite={false}
+      />
+    </points>
+  )
+}
+
+function GlowPoint({ position, color = '#ffffff', size = 0.6 }) {
+  const ref = useRef()
+  useFrame((state) => {
+    if (ref.current) {
+      const pulse = Math.sin(state.clock.elapsedTime * 1.5) * 0.1 + 1
+      ref.current.scale.setScalar(pulse)
+    }
+  })
+  return (
+    <group ref={ref} position={position}>
+      <mesh>
+        <sphereGeometry args={[size * 0.3, 8, 8]} />
+        <meshBasicMaterial color={color} />
+      </mesh>
+      <mesh>
+        <sphereGeometry args={[size, 12, 12]} />
+        <meshBasicMaterial color={color} transparent opacity={0.08} blending={THREE.AdditiveBlending} depthWrite={false} />
+      </mesh>
+    </group>
   )
 }
 
@@ -1331,6 +1408,8 @@ export default function SpaceScene({ step, photoGroups, onPhotoClick, isMobile }
       <ambientLight intensity={0.3} />
       <pointLight position={[80, 60, 60]} intensity={2.8} color="#f0f0ff" />
       <pointLight position={[-40, -30, -80]} intensity={1.4} color="#8866bb" />
+      <pointLight position={[30, 20, -110]} intensity={1.6} color="#f0f0ff" />
+      <pointLight position={[-20, 15, -140]} intensity={1.4} color="#eeddff" />
       <spotLight position={[0, 40, 40]} intensity={1.4} angle={0.5} penumbra={1} color="#ff6b9d" />
       <spotLight position={[0, -30, -60]} intensity={0.8} angle={0.6} penumbra={1} color="#ffd700" />
 
@@ -1363,10 +1442,28 @@ export default function SpaceScene({ step, photoGroups, onPhotoClick, isMobile }
       <NebulaCloud position={[-45, -20, -170]} color="#664488" secondaryColor="#8855bb" scale={2.5} />
       <NebulaCloud position={[50, 25, -280]} color="#995577" secondaryColor="#dd7799" scale={2.5} />
       <NebulaCloud position={[-20, -8, -300]} color="#554499" secondaryColor="#7766bb" scale={3.0} />
+      <NebulaCloud position={[-90, 30, -80]} color="#5566aa" secondaryColor="#7788cc" scale={2.0} />
+      <NebulaCloud position={[90, -25, -120]} color="#aa5577" secondaryColor="#cc7799" scale={2.2} />
+      <NebulaCloud position={[-80, -35, -160]} color="#775599" secondaryColor="#9977bb" scale={1.8} />
+      <NebulaCloud position={[85, 30, -50]} color="#cc8855" secondaryColor="#eebb88" scale={1.6} />
 
       <SpiralGalaxy position={[-70, 25, -230]} rotation={[1.0, 0.3, 0.5]} scale={3.5} />
       <SpiralGalaxy position={[80, -15, -260]} rotation={[-0.5, 0.8, 0.2]} scale={2.5} />
       <SpiralGalaxy position={[15, 40, -320]} rotation={[0.8, -0.4, 0.3]} scale={2.0} />
+
+      <StarCluster position={[-45, 20, -30]} color="#aaccff" count={90} spread={3.5} />
+      <StarCluster position={[50, 25, -70]} color="#ccbbee" count={70} spread={2.5} />
+      <StarCluster position={[-55, -18, -100]} color="#bbddff" count={80} spread={3} />
+      <StarCluster position={[45, -20, -130]} color="#ddccff" count={60} spread={2} />
+      <StarCluster position={[-40, 30, -160]} color="#aabbee" count={75} spread={3} />
+
+      <GlowPoint position={[-50, 25, -20]} color="#88bbff" size={0.5} />
+      <GlowPoint position={[55, 18, -40]} color="#ffaacc" size={0.4} />
+      <GlowPoint position={[-45, -22, -65]} color="#aaddff" size={0.6} />
+      <GlowPoint position={[50, -15, -95]} color="#ffcc88" size={0.45} />
+      <GlowPoint position={[-55, 20, -120]} color="#cc99ff" size={0.5} />
+      <GlowPoint position={[48, 28, -150]} color="#88ccff" size={0.4} />
+      <GlowPoint position={[-42, -25, -140]} color="#ffbb99" size={0.55} />
 
       <CosmicDustTrail color="#9977cc" radius={50} y={5} speed={0.02} />
       <CosmicDustTrail color="#cc7799" radius={40} y={-15} speed={-0.015} />
