@@ -5,6 +5,7 @@ import { OrbitControls } from '@react-three/drei'
 import './App.css'
 import SpaceScene from './components/SpaceScene'
 import PortalJourney from './components/PortalJourney'
+import StarflightEpilogue from './components/StarflightEpilogue'
 
 const captions = [
   'Момент, когда я понял, что ты - моя судьба 💫',
@@ -192,6 +193,7 @@ function App() {
 
   const [portalActive, setPortalActive] = useState(false)
   const [letterVisible, setLetterVisible] = useState(false)
+  const [epilogueActive, setEpilogueActive] = useState(false)
 
   const handleNextStep = () => {
     if (step === TOTAL_STEPS) {
@@ -217,11 +219,21 @@ function App() {
     setLetterVisible(false)
   }
 
+  const handleStartEpilogue = () => {
+    setEpilogueActive(true)
+    setLetterVisible(false)
+  }
+
   const handleRestart = () => {
     setPortalActive(false)
     setLetterVisible(false)
+    setEpilogueActive(false)
     setStep(0)
     setCurrentMessage(0)
+  }
+
+  if (epilogueActive) {
+    return <StarflightEpilogue onRestart={handleRestart} />
   }
 
   if (portalActive) {
@@ -267,8 +279,8 @@ function App() {
                   <button className="planet-button" onClick={handleBackFromLetter}>
                     Назад
                   </button>
-                  <button className="planet-button" onClick={handleRestart}>
-                    Сначала 
+                  <button className="planet-button" onClick={handleStartEpilogue}>
+                    Дальше
                   </button>
                 </motion.div>
               </motion.div>
