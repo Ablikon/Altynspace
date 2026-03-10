@@ -1531,6 +1531,7 @@ export default function SpaceScene({ step, photoGroups, onPhotoClick, isMobile }
           />
         </>
       )}
+
     </>
   )
 }

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { OrbitControls } from '@react-three/drei'
 import './App.css'
 import SpaceScene from './components/SpaceScene'
+import PortalJourney from './components/PortalJourney'
 
 const captions = [
   'Момент, когда я понял, что ты - моя судьба 💫',
@@ -146,12 +147,37 @@ function App() {
       text: 'Красная планета — наши смелые шаги вперёд, наши приключения и открытия.',
     },
     {
-      title: 'Финал. Ты — моя вселенная 💖',
+      title: 'Ты — моя вселенная 💖',
       text: 'В бесконечности космоса есть только одна константа — моя любовь к тебе, Алтынай.',
     },
   ]
 
   const TOTAL_STEPS = 6
+
+  const letterLines = [
+    'Моей Алтынай,',
+    '',
+    'Я пролетел через целую вселенную, чтобы сказать тебе то, что мое сердце шепчет каждый день.',
+    '',
+    'Ты знаешь, я не всегда нахожу правильные слова. Но рядом с тобой мне и не нужно — ты чувствуешь все без слов.',
+    '',
+    'Спасибо, что ты смеешься так, что весь мир замирает.',
+    'Спасибо, что обнимаешь так, будто ничего больше не существует.',
+    'Спасибо, что веришь в меня, даже когда я сам сомневаюсь.',
+    '',
+    'С тобой обычный вечер становится лучшим воспоминанием.',
+    'С тобой тишина звучит красивее любой музыки.',
+    'С тобой я наконец понял, что значит — быть дома.',
+    '',
+    'Ты — мое утро и мой закат.',
+    'Ты — моя самая красивая случайность и моя самая важная неизбежность.',
+    '',
+    'Эта вселенная, которую я создал — лишь маленькое отражение того, что я чувствую к тебе. Настоящая вселенная моей любви не поместится ни в какой экран.',
+    '',
+    'Я люблю тебя, Алтынай. Вчера, сегодня, завтра — и через миллиард световых лет.',
+    '',
+    'Навсегда твой ❤️',
+  ]
 
   const handlePhotoClick = (globalIndex) => setSelectedPhoto(globalIndex)
   const closePhoto = () => setSelectedPhoto(null)
@@ -164,19 +190,93 @@ function App() {
     setSelectedPhoto((prev) => (prev - 1 + photos.length) % photos.length)
   }
 
+  const [portalActive, setPortalActive] = useState(false)
+  const [letterVisible, setLetterVisible] = useState(false)
+
   const handleNextStep = () => {
     if (step === TOTAL_STEPS) {
-      setStep(0)
-      setCurrentMessage(0)
+      setPortalActive(true)
     } else {
-      setStep(Math.min(step + 1, TOTAL_STEPS))
-      setCurrentMessage(Math.min(currentMessage + 1, messages.length - 1))
+      const next = step + 1
+      setStep(next)
+      setCurrentMessage(Math.min(next, messages.length - 1))
     }
   }
 
   const handlePrevStep = () => {
     setStep(Math.max(step - 1, 0))
     setCurrentMessage(Math.max(currentMessage - 1, 0))
+  }
+
+  const handlePortalComplete = () => {
+    setLetterVisible(true)
+  }
+
+  const handleBackFromLetter = () => {
+    setPortalActive(false)
+    setLetterVisible(false)
+  }
+
+  const handleRestart = () => {
+    setPortalActive(false)
+    setLetterVisible(false)
+    setStep(0)
+    setCurrentMessage(0)
+  }
+
+  if (portalActive) {
+    return (
+      <>
+        <PortalJourney onComplete={handlePortalComplete} onBack={handleBackFromLetter} />
+
+        <AnimatePresence>
+          {letterVisible && (
+            <motion.div
+              className="letter-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1.5 }}
+            >
+              <motion.div
+                className="letter-container"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8, delay: 0.5 }}
+              >
+                <h2 className="letter-title">Моей Алтынай</h2>
+                <div className="letter-body">
+                  {letterLines.map((line, i) => (
+                    <motion.p
+                      key={i}
+                      className={line === '' ? 'letter-line letter-spacer' : 'letter-line'}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 1.0 + i * 0.35, duration: 0.6 }}
+                    >
+                      {line || '\u00A0'}
+                    </motion.p>
+                  ))}
+                </div>
+                <motion.div
+                  className="letter-footer"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1.0 + letterLines.length * 0.35 + 0.5, duration: 0.8 }}
+                >
+                  <button className="planet-button" onClick={handleBackFromLetter}>
+                    Назад
+                  </button>
+                  <button className="planet-button" onClick={handleRestart}>
+                    Сначала 
+                  </button>
+                </motion.div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </>
+    )
   }
 
   return (
@@ -264,7 +364,7 @@ function App() {
                     Назад
                   </button>
                   <button className="planet-button" onClick={handleNextStep}>
-                    {step === TOTAL_STEPS ? 'Повторить ♻️' : 'Дальше ✨'}
+                    {step === TOTAL_STEPS ? 'Дальше ✨' : 'Дальше ✨'}
                   </button>
                 </div>
               </motion.div>
