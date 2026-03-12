@@ -390,11 +390,11 @@ function DiveFlightController({ progress, onComplete }) {
       const sub = (ease - 0.38) / 0.12
       const s = sub * sub * (3 - 2 * sub)
       const pos = close.clone().lerp(skim, s)
-      // Smooth camera shake (sin/cos based, no random jitter)
-      const shakeScale = Math.sin(sub * Math.PI) * 0.3
-      pos.x += Math.sin(t * 25) * shakeScale
-      pos.y += Math.cos(t * 30) * shakeScale * 0.8
-      pos.z += Math.sin(t * 20 + 1.5) * shakeScale * 0.4
+      // Smooth camera shake — low frequency for cinematic feel
+      const shakeScale = Math.sin(sub * Math.PI) * 0.12
+      pos.x += Math.sin(t * 8) * shakeScale
+      pos.y += Math.cos(t * 10) * shakeScale * 0.7
+      pos.z += Math.sin(t * 7 + 1.5) * shakeScale * 0.3
       camera.position.copy(pos)
       camera.lookAt(ALMATY_SURFACE)
 
@@ -559,7 +559,7 @@ function AtmoHazeOverlay({ progress }) {
 /* ═══════════════════════════════════════ */
 /* ─── Main Export ─── */
 /* ═══════════════════════════════════════ */
-export default function EarthDive({ onRestart }) {
+export default function EarthDive({ onRestart, onNext }) {
   const [flightDone, setFlightDone] = useState(false)
   const [showFinal, setShowFinal] = useState(false)
   const [labelProgress, setLabelProgress] = useState(0)
@@ -645,7 +645,10 @@ export default function EarthDive({ onRestart }) {
               >Потому что ты — мой дом</motion.p>
 
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 9 }}>
-                <button className="planet-button earth-dive-restart" onClick={onRestart}>Сначала</button>
+                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                  {onNext && <button className="planet-button earth-dive-restart" onClick={onNext}>Дальше ✨</button>}
+                  {/* <button className="planet-button earth-dive-restart" style={{ opacity: 0.6, fontSize: '0.85rem' }} onClick={onRestart}>Сначала</button> */}
+                </div>
               </motion.div>
             </div>
           </motion.div>

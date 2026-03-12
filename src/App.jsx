@@ -7,6 +7,7 @@ import SpaceScene from './components/SpaceScene'
 import PortalJourney from './components/PortalJourney'
 import StarflightEpilogue from './components/StarflightEpilogue'
 import EarthDive from './components/EarthDive'
+import SupernovaBirth from './components/SupernovaBirth'
 
 const captions = [
   'Момент, когда я понял, что ты - моя судьба 💫',
@@ -196,6 +197,7 @@ function App() {
   const [letterVisible, setLetterVisible] = useState(false)
   const [epilogueActive, setEpilogueActive] = useState(false)
   const [earthDiveActive, setEarthDiveActive] = useState(false)
+  const [supernovaActive, setSupernovaActive] = useState(false)
   const letterContainerRef = useRef(null)
 
   useEffect(() => {
@@ -251,12 +253,22 @@ function App() {
     setLetterVisible(false)
     setEpilogueActive(false)
     setEarthDiveActive(false)
+    setSupernovaActive(false)
     setStep(0)
     setCurrentMessage(0)
   }
 
+  const handleStartSupernova = () => {
+    setEarthDiveActive(false)
+    setSupernovaActive(true)
+  }
+
+  if (supernovaActive) {
+    return <SupernovaBirth onRestart={handleRestart} />
+  }
+
   if (earthDiveActive) {
-    return <EarthDive onRestart={handleRestart} />
+    return <EarthDive onRestart={handleRestart} onNext={handleStartSupernova} />
   }
 
   if (epilogueActive) {
@@ -375,7 +387,7 @@ function App() {
                   className="planet-button"
                   onClick={() => {
                     const a = document.getElementById('bg-audio')
-                    if (a) { a.muted = false; a.play().catch(() => {}) }
+                    if (a) { a.muted = false; a.play().catch(() => { }) }
                     setShowStart(false)
                     setStep(0)
                     setCurrentMessage(0)
