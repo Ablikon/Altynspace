@@ -301,7 +301,15 @@ function FinalWash({ progress }) {
 }
 
 function ProgressSync({ progress, onProgress }) {
-  useFrame(() => { onProgress(progress.current) })
+  const prev = useRef(0)
+  useFrame(() => {
+    const p = progress.current
+    // Only update React state when progress changes enough to matter
+    if (Math.abs(p - prev.current) > 0.002) {
+      prev.current = p
+      onProgress(p)
+    }
+  })
   return null
 }
 
@@ -382,11 +390,11 @@ function DiveFlightController({ progress, onComplete }) {
       const sub = (ease - 0.38) / 0.12
       const s = sub * sub * (3 - 2 * sub)
       const pos = close.clone().lerp(skim, s)
-      // Camera shake
-      const shake = Math.sin(sub * Math.PI) * 0.35
-      pos.x += (Math.random() - 0.5) * shake
-      pos.y += (Math.random() - 0.5) * shake
-      pos.z += (Math.random() - 0.5) * shake * 0.4
+      // Smooth camera shake (sin/cos based, no random jitter)
+      const shakeScale = Math.sin(sub * Math.PI) * 0.3
+      pos.x += Math.sin(t * 25) * shakeScale
+      pos.y += Math.cos(t * 30) * shakeScale * 0.8
+      pos.z += Math.sin(t * 20 + 1.5) * shakeScale * 0.4
       camera.position.copy(pos)
       camera.lookAt(ALMATY_SURFACE)
 
@@ -508,15 +516,16 @@ const LABELS = [
 function DiveLabels({ progress }) {
   return (
     <div className="earth-dive-labels">
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {LABELS.map(l => {
           if (progress < l.showAt || progress >= l.hideAt) return null
           return (
             <motion.div key={l.text} className="earth-dive-label"
-              initial={{ opacity: 0, y: 20, scale: 0.9 }}
+              style={{ position: 'absolute' }}
+              initial={{ opacity: 0, y: 30, scale: 0.85 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -15, scale: 0.95 }}
-              transition={{ duration: 0.8 }}
+              exit={{ opacity: 0, scale: 1.1 }}
+              transition={{ duration: 1.0, ease: 'easeOut' }}
             >{l.text}</motion.div>
           )
         })}
@@ -555,11 +564,9 @@ export default function EarthDive({ onRestart }) {
   const [showFinal, setShowFinal] = useState(false)
   const [labelProgress, setLabelProgress] = useState(0)
   const progressRef = useRef(0)
-  const frameCount = useRef(0)
 
   const handleProgress = useCallback((p) => {
-    frameCount.current++
-    if (frameCount.current % 4 === 0) setLabelProgress(p)
+    setLabelProgress(p)
   }, [])
 
   const handleFlightComplete = useCallback(() => {
@@ -604,16 +611,43 @@ export default function EarthDive({ onRestart }) {
             className="earth-dive-final"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 1.5 }}
+            transition={{ duration: 2 }}
           >
-            <motion.div className="earth-dive-final-content"
-              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.2, delay: 0.3 }}
-            >
-              <p className="earth-dive-address">Водник-3, дом 89</p>
-              <p className="earth-dive-subtitle">Я прилетел к тебе через всю вселенную</p>
-              <p className="earth-dive-heart">❤️</p>
-              <button className="planet-button earth-dive-restart" onClick={onRestart}>Сначала</button>
-            </motion.div>
+            <div className="earth-dive-final-content">
+              <motion.p className="earth-dive-address"
+                initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1.2, delay: 0.5 }}
+              >Водник-3, дом 89</motion.p>
+
+              <motion.p className="earth-dive-subtitle"
+                initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1, delay: 1.8 }}
+              >Из бесконечного космоса, через звёзды и галактики...</motion.p>
+
+              <motion.p className="earth-dive-subtitle"
+                initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1, delay: 3.2 }}
+              >мимо планет, через атмосферу и облака...</motion.p>
+
+              <motion.p className="earth-dive-subtitle" style={{ marginTop: '0.8rem' }}
+                initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1.2, delay: 4.8 }}
+              >я прилетел именно сюда — к тебе</motion.p>
+
+              <motion.p className="earth-dive-heart"
+                initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8, delay: 6.2, type: 'spring', stiffness: 120 }}
+              >❤️</motion.p>
+
+              <motion.p className="earth-dive-subtitle" style={{ fontSize: '0.95rem', opacity: 0.6 }}
+                initial={{ opacity: 0 }} animate={{ opacity: 0.6 }}
+                transition={{ duration: 1.5, delay: 7.5 }}
+              >Потому что ты — мой дом</motion.p>
+
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 9 }}>
+                <button className="planet-button earth-dive-restart" onClick={onRestart}>Сначала</button>
+              </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
