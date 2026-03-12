@@ -6,6 +6,7 @@ import './App.css'
 import SpaceScene from './components/SpaceScene'
 import PortalJourney from './components/PortalJourney'
 import StarflightEpilogue from './components/StarflightEpilogue'
+import EarthDive from './components/EarthDive'
 
 const captions = [
   'Момент, когда я понял, что ты - моя судьба 💫',
@@ -194,6 +195,7 @@ function App() {
   const [portalActive, setPortalActive] = useState(false)
   const [letterVisible, setLetterVisible] = useState(false)
   const [epilogueActive, setEpilogueActive] = useState(false)
+  const [earthDiveActive, setEarthDiveActive] = useState(false)
   const letterContainerRef = useRef(null)
 
   useEffect(() => {
@@ -239,16 +241,26 @@ function App() {
     setLetterVisible(false)
   }
 
+  const handleEpilogueComplete = () => {
+    setEpilogueActive(false)
+    setEarthDiveActive(true)
+  }
+
   const handleRestart = () => {
     setPortalActive(false)
     setLetterVisible(false)
     setEpilogueActive(false)
+    setEarthDiveActive(false)
     setStep(0)
     setCurrentMessage(0)
   }
 
+  if (earthDiveActive) {
+    return <EarthDive onRestart={handleRestart} />
+  }
+
   if (epilogueActive) {
-    return <StarflightEpilogue onRestart={handleRestart} />
+    return <StarflightEpilogue onComplete={handleEpilogueComplete} />
   }
 
   if (portalActive) {

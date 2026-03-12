@@ -983,14 +983,13 @@ function EpilogueScene({ onComplete }) {
 
 /* ─── Main Export ─── */
 
-export default function StarflightEpilogue({ onRestart }) {
+export default function StarflightEpilogue({ onComplete }) {
   const [flightDone, setFlightDone] = useState(false)
-  const [showFinal, setShowFinal] = useState(false)
 
   const handleFlightComplete = useCallback(() => {
     setFlightDone(true)
-    setTimeout(() => setShowFinal(true), 800)
-  }, [])
+    setTimeout(() => { if (onComplete) onComplete() }, 1200)
+  }, [onComplete])
 
   return (
     <div className="portal-journey-container">
@@ -998,21 +997,11 @@ export default function StarflightEpilogue({ onRestart }) {
         camera={{ position: [0, 0, 5], fov: 70, near: 0.1, far: 600 }}
         dpr={[1, 1.5]}
         gl={{ antialias: false, alpha: false, powerPreference: 'high-performance', stencil: false, depth: true }}
-        style={{ opacity: flightDone ? 0.3 : 1, transition: 'opacity 1.5s ease' }}
+        style={{ opacity: flightDone ? 0 : 1, transition: 'opacity 1.2s ease' }}
       >
         <color attach="background" args={['#020006']} />
         <EpilogueScene onComplete={handleFlightComplete} />
       </Canvas>
-
-      {showFinal && (
-        <div className="epilogue-final-overlay">
-          <div className="epilogue-final-content">
-            <p className="epilogue-final-text">Наша история продолжается...</p>
-            <p className="epilogue-final-subtitle">и это только начало</p>
-            <button className="planet-button epilogue-restart-btn" onClick={onRestart}>Сначала</button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

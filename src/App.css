@@ -401,6 +401,81 @@
   }
 }
 
+/* Earth Dive labels and overlays */
+.earth-dive-labels {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.earth-dive-label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 2.8rem;
+  font-weight: 400;
+  letter-spacing: 0.15em;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 0 30px rgba(100, 180, 255, 0.5), 0 0 60px rgba(100, 180, 255, 0.2);
+  text-transform: uppercase;
+}
+
+.earth-dive-final {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at center, rgba(60, 40, 10, 0.4) 0%, rgba(0, 0, 0, 0.8) 70%);
+  padding: 2rem;
+  box-sizing: border-box;
+  animation: epilogueFadeIn 1.5s ease forwards;
+}
+
+.earth-dive-final-content {
+  text-align: center;
+}
+
+.earth-dive-address {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 2rem;
+  font-weight: 400;
+  background: linear-gradient(135deg, #ffdd99, #ffbb66, #ffcc88);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0 0 0.8rem 0;
+  letter-spacing: 0.05em;
+}
+
+.earth-dive-subtitle {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 1.1rem;
+  color: rgba(255, 230, 200, 0.7);
+  font-style: italic;
+  margin: 0 0 1.5rem 0;
+}
+
+.earth-dive-heart {
+  font-size: 2.5rem;
+  margin: 0 0 2rem 0;
+  animation: epilogueTextGlow 2s ease-in-out infinite alternate;
+}
+
+.earth-dive-restart {
+  animation: epilogueFadeIn 1s ease 0.5s both;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -563,6 +638,22 @@
     font-size: 0.95rem;
     margin-bottom: 2rem;
   }
+
+  .earth-dive-label {
+    font-size: 1.8rem;
+  }
+
+  .earth-dive-address {
+    font-size: 1.5rem;
+  }
+
+  .earth-dive-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .earth-dive-heart {
+    font-size: 2rem;
+  }
 }
 
 /* VERY SMALL SCREENS (iPhone SE, etc.) */
@@ -615,6 +706,14 @@
 
   .epilogue-final-subtitle {
     font-size: 0.85rem;
+  }
+
+  .earth-dive-label {
+    font-size: 1.4rem;
+  }
+
+  .earth-dive-address {
+    font-size: 1.2rem;
   }
 }
 
