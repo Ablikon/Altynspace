@@ -652,9 +652,10 @@ function ProgressSync({ progress, onProgress }) {
     const prev = useRef(0); useFrame(() => { const p = progress.current; if (Math.abs(p - prev.current) > 0.002) { prev.current = p; onProgress(p) } }); return null
 }
 
-function NovaFlightController({ progress, onComplete }) {
+function NovaFlightController({ progress, onComplete, isInspecting }) {
     const { camera } = useThree(); const startTime = useRef(null), completed = useRef(false)
     useFrame((s) => {
+        if (isInspecting) return // Yield camera control to OrbitControls
         if (startTime.current === null) startTime.current = s.clock.elapsedTime
         const elapsed = s.clock.elapsedTime - startTime.current, t = s.clock.elapsedTime
         let p = Math.min(1, elapsed / FLIGHT_DURATION)
@@ -710,6 +711,27 @@ function BackgroundShift({ progress }) {
     }); return null
 }
 
+function GlowingBackdrop({ progress }) {
+    const group = useRef(), r1 = useRef(), r2 = useRef(), r3 = useRef()
+    useFrame((s) => {
+        if (!group.current) return
+        const p = progress.current, vis = p > 0.75
+        group.current.visible = vis; if (!vis) return
+        const t = Math.min(1, Math.max(0, (p - 0.75) / 0.15)), t2 = t * t * (3 - 2 * t)
+        const time = s.clock.elapsedTime
+        if (r1.current) { r1.current.material.opacity = t2 * 0.35; r1.current.rotation.z = time * 0.03 + 1 }
+        if (r2.current) { r2.current.material.opacity = t2 * 0.25; r2.current.rotation.z = time * -0.02 + 2; r2.current.scale.setScalar(1 + Math.sin(time * 0.5) * 0.1) }
+        if (r3.current) { r3.current.material.opacity = t2 * 0.45; r3.current.rotation.z = time * 0.01; r3.current.scale.setScalar(0.8 + Math.sin(time * 0.3) * 0.15) }
+    })
+    return (
+        <group ref={group} position={[NEB.x, NEB.y, NEB.z - 5]} visible={false}>
+            <mesh ref={r1}><planeGeometry args={[140, 140]} /><meshBasicMaterial map={glowSprite} color="#2a1b54" transparent blending={THREE.AdditiveBlending} depthWrite={false} /></mesh>
+            <mesh ref={r2}><planeGeometry args={[100, 100]} /><meshBasicMaterial map={glowSprite} color="#442266" transparent blending={THREE.AdditiveBlending} depthWrite={false} /></mesh>
+            <mesh ref={r3}><planeGeometry args={[70, 70]} /><meshBasicMaterial map={glowSprite} color="#114488" transparent blending={THREE.AdditiveBlending} depthWrite={false} /></mesh>
+        </group>
+    )
+}
+
 function NovaScene({ progress, onComplete, onProgress, isInspecting }) {
     const starLightRef = useRef()
     useFrame(() => { if (starLightRef.current) { const p = progress.current; starLightRef.current.intensity = p > 0.68 ? Math.min(5, (p - 0.68) / 0.08 * 5) : 0 } })
@@ -717,7 +739,7 @@ function NovaScene({ progress, onComplete, onProgress, isInspecting }) {
         <ambientLight intensity={0.1} />
         <pointLight ref={starLightRef} position={NEB} intensity={0} color="#fffbe8" distance={120} />
         <directionalLight position={[20, 15, 30]} intensity={0.25} color="#eef" />
-        <NovaFlightController progress={progress} onComplete={onComplete} />
+        <NovaFlightController progress={progress} onComplete={onComplete} isInspecting={isInspecting} />
         <ProgressSync progress={progress} onProgress={onProgress} />
         <BackgroundShift progress={progress} />
         <DeepStars progress={progress} />
@@ -728,6 +750,7 @@ function NovaScene({ progress, onComplete, onProgress, isInspecting }) {
         <NebulaParticles progress={progress} />
         <SupernovaFlash progress={progress} />
         <NewStar progress={progress} />
+        <GlowingBackdrop progress={progress} />
         <SilhouetteConstellation progress={progress} />
         <NameConstellation progress={progress} />
         {isInspecting && <OrbitControls target={NEB} enableZoom={true} enablePan={false} autoRotate={true} autoRotateSpeed={0.5} maxDistance={80} minDistance={10} />}
