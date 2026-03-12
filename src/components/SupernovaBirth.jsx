@@ -1,5 +1,6 @@
 import { useRef, useMemo, useState, useCallback, useEffect } from 'react'
 import { Canvas, useFrame, useThree, useLoader } from '@react-three/fiber'
+import { OrbitControls } from '@react-three/drei'
 import { motion, AnimatePresence } from 'framer-motion'
 import * as THREE from 'three'
 
@@ -120,9 +121,9 @@ function processPhotoToStars(img) {
     const fc = document.createElement('canvas'); fc.width = FULL_W; fc.height = FULL_H
     const fctx = fc.getContext('2d'); fctx.drawImage(img, 0, 0, FULL_W, FULL_H)
 
-    // Crop: top 60% height, center 85% width — full face, hair, chin, neck
-    const cropX = Math.floor(FULL_W * 0.075), cropY = 0
-    const cropW = Math.floor(FULL_W * 0.85), cropH = Math.floor(FULL_H * 0.60)
+    // Crop: top 58% height, left 5% to 65% width — strictly isolates face/hair, removes right shelf and bottom completely
+    const cropX = Math.floor(FULL_W * 0.05), cropY = Math.floor(FULL_H * 0.05)
+    const cropW = Math.floor(FULL_W * 0.60), cropH = Math.floor(FULL_H * 0.53)
     const W = cropW, H = cropH
 
     const c = document.createElement('canvas'); c.width = W; c.height = H
@@ -709,7 +710,7 @@ function BackgroundShift({ progress }) {
     }); return null
 }
 
-function NovaScene({ progress, onComplete, onProgress }) {
+function NovaScene({ progress, onComplete, onProgress, isInspecting }) {
     const starLightRef = useRef()
     useFrame(() => { if (starLightRef.current) { const p = progress.current; starLightRef.current.intensity = p > 0.68 ? Math.min(5, (p - 0.68) / 0.08 * 5) : 0 } })
     return (<>
@@ -729,6 +730,7 @@ function NovaScene({ progress, onComplete, onProgress }) {
         <NewStar progress={progress} />
         <SilhouetteConstellation progress={progress} />
         <NameConstellation progress={progress} />
+        {isInspecting && <OrbitControls target={NEB} enableZoom={true} enablePan={false} autoRotate={true} autoRotateSpeed={0.5} maxDistance={80} minDistance={10} />}
     </>)
 }
 
@@ -736,6 +738,7 @@ function NovaScene({ progress, onComplete, onProgress }) {
 export default function SupernovaBirth({ onRestart }) {
     const [flightDone, setFlightDone] = useState(false)
     const [showFinal, setShowFinal] = useState(false)
+    const [isInspecting, setIsInspecting] = useState(false)
     const progressRef = useRef(0)
     const [, setLP] = useState(0)
     const handleProgress = useCallback((p) => { setLP(p) }, [])
@@ -745,21 +748,32 @@ export default function SupernovaBirth({ onRestart }) {
         <div className="portal-journey-container">
             <Canvas camera={{ position: [0, 2, 5], fov: 60, near: 0.1, far: 600 }} dpr={[1, 1.5]}
                 gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', stencil: false, depth: true }}
-                style={{ opacity: flightDone ? 0.6 : 1, transition: 'opacity 2.5s ease' }}>
+                style={{ opacity: flightDone ? 0.75 : 1, transition: 'opacity 2.5s ease', cursor: isInspecting ? 'grab' : 'default' }}>
                 <color attach="background" args={['#000004']} />
-                <NovaScene progress={progressRef} onComplete={handleFlightComplete} onProgress={handleProgress} />
+                <NovaScene progress={progressRef} onComplete={handleFlightComplete} onProgress={handleProgress} isInspecting={isInspecting} />
             </Canvas>
 
             <AnimatePresence>
-                {showFinal && (<motion.div className="earth-dive-final" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 2.5 }}>
-                    <div className="earth-dive-final-content">
-                        <motion.p className="earth-dive-address" style={{ fontSize: '1.5rem' }} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.5, delay: 0.5 }}>Наша любовь зажгла новую звезду</motion.p>
+                {showFinal && !isInspecting && (<motion.div className="earth-dive-final" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.5 } }} transition={{ duration: 2.5 }}>
+                    <div className="earth-dive-final-content" style={{ padding: '3rem', background: 'rgba(5, 5, 20, 0.4)', borderRadius: '24px', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                        <motion.p className="earth-dive-address" style={{ fontSize: '1.8rem', letterSpacing: '0.05em' }} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.5, delay: 0.5 }}>Наша любовь зажгла новую звезду</motion.p>
                         <motion.p className="earth-dive-subtitle" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.2, delay: 2.5 }}>и теперь она будет светить вечно</motion.p>
-                        <motion.p className="earth-dive-subtitle" style={{ marginTop: '1rem' }} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.2, delay: 4 }}>Созвездие Алтынай ✨</motion.p>
-                        <motion.p className="earth-dive-heart" initial={{ opacity: 0, scale: 0.3 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1, delay: 5.5, type: 'spring', stiffness: 100 }}>💫</motion.p>
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 7 }}><button className="planet-button earth-dive-restart" onClick={onRestart}>Сначала</button></motion.div>
+                        <motion.p className="earth-dive-subtitle" style={{ marginTop: '1.5rem', fontSize: '1.4rem', color: '#ffd080', fontWeight: '500' }} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.2, delay: 4 }}>Созвездие Алтынай ✨</motion.p>
+                        <motion.p className="earth-dive-heart" style={{ display: 'none' }} initial={{ opacity: 0, scale: 0.3 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1, delay: 5.5, type: 'spring', stiffness: 100 }}>💫</motion.p>
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 6.5 }}>
+                            <div style={{ display: 'flex', gap: '1.2rem', justifyContent: 'center', marginTop: '3rem', flexWrap: 'wrap' }}>
+                                <button className="planet-button earth-dive-restart" onClick={() => setIsInspecting(true)}>Посмотреть созвездие 🔭</button>
+                                <button className="planet-button earth-dive-restart" style={{ opacity: 0.6, fontSize: '0.9rem' }} onClick={onRestart}>Сначала</button>
+                            </div>
+                        </motion.div>
                     </div>
                 </motion.div>)}
+
+                {isInspecting && (
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} style={{ position: 'absolute', bottom: '6%', left: '0', right: '0', display: 'flex', justifyContent: 'center', pointerEvents: 'none' }}>
+                        <button className="planet-button earth-dive-restart" style={{ pointerEvents: 'auto', background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)' }} onClick={() => setIsInspecting(false)}>✨ Вернуться назад</button>
+                    </motion.div>
+                )}
             </AnimatePresence>
         </div>
     )
