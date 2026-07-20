@@ -1,4 +1,4 @@
-// Vercel Serverless Function — записывает каждый заход на сайт и шлёт
+// Vercel Serverless Function — записывает заходы/уходы с сайта и шлёт
 // уведомление в Telegram (бот kotask). Никаких попапов/запросов разрешений
 // у посетителя не появляется: гео берётся из edge-заголовков Vercel по IP,
 // браузерный geolocation НЕ используется.
@@ -28,6 +28,14 @@ function parseUA(ua = '') {
   return { os, browser, device };
 }
 
+function fmtDuration(sec) {
+  sec = Math.max(0, Math.round(Number(sec) || 0));
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  if (m <= 0) return `${s} сек`;
+  return `${m} мин ${s} сек`;
+}
+
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   try {
@@ -38,30 +46,21 @@ export default async function handler(req, res) {
     if (req.method === 'POST') {
       if (req.body && typeof req.body === 'object') body = req.body;
       else {
-        try {
-          body = JSON.parse(req.body || '{}');
-        } catch {
-          body = {};
-        }
+        try { body = JSON.parse(req.body || '{}'); } catch { body = {}; }
       }
     }
 
+    const isLeave = body.type === 'leave';
+
     // IP
     const xff = get('x-forwarded-for');
-    const ip =
-      (xff ? String(xff).split(',')[0].trim() : '') ||
-      get('x-real-ip') ||
-      'неизвестно';
+    const ip = (xff ? String(xff).split(',')[0].trim() : '') || get('x-real-ip') || 'неизвестно';
 
     // Гео по IP (заголовки Vercel edge — без запроса разрешений у пользователя)
     const country = get('x-vercel-ip-country');
     const region = get('x-vercel-ip-country-region');
     let city = get('x-vercel-ip-city');
-    try {
-      city = decodeURIComponent(city || '');
-    } catch {
-      /* keep as-is */
-    }
+    try { city = decodeURIComponent(city || ''); } catch { /* keep */ }
     const edgeTz = get('x-vercel-ip-timezone');
     const lat = get('x-vercel-ip-latitude');
     const lon = get('x-vercel-ip-longitude');
@@ -70,7 +69,6 @@ export default async function handler(req, res) {
     const { os, browser, device } = parseUA(ua);
     const lang = get('accept-language');
 
-    // «Это я» — по cookie owner=1 (ставится один раз после захода на ?me=1)
     const cookies = String(get('cookie') || '');
     const isOwner = /(?:^|;\s*)owner=1(?:;|$)/.test(cookies) || body.owner === true;
 
@@ -86,7 +84,17 @@ export default async function handler(req, res) {
     const geo = [city, region, country].filter(Boolean).join(', ') || '—';
     const maps = lat && lon ? `https://www.google.com/maps?q=${lat},${lon}` : '';
 
-    const lines = [`👀 Заход на сайт${site ? ` (${site})` : ''}`, who, ''];
+    const lines = [];
+    if (isLeave) {
+      lines.push(`🚪 Ушёл с сайта${site ? ` (${site})` : ''}`);
+      lines.push(who);
+      lines.push('');
+      lines.push(`⏱ Провёл на сайте: ${fmtDuration(body.durationSec)}`);
+    } else {
+      lines.push(`👀 Заход на сайт${site ? ` (${site})` : ''}`);
+      lines.push(who);
+      lines.push('');
+    }
     lines.push(`🕒 ${new Date().toISOString()} (UTC)`);
     lines.push(`🌍 IP: ${ip}`);
     lines.push(`📍 Гео по IP: ${geo}${edgeTz ? ` · ${edgeTz}` : ''}`);
@@ -108,11 +116,7 @@ export default async function handler(req, res) {
       await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text,
-          disable_web_page_preview: true,
-        }),
+        body: JSON.stringify({ chat_id: chatId, text, disable_web_page_preview: true }),
       }).catch(() => {});
     }
 

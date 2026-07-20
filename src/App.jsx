@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { motion, AnimatePresence } from 'framer-motion'
-import { OrbitControls } from '@react-three/drei'
+import { OrbitControls, Loader } from '@react-three/drei'
 import './App.css'
 import SpaceScene from './components/SpaceScene'
 import PortalJourney from './components/PortalJourney'
@@ -366,6 +366,14 @@ function App() {
           />
         </Canvas>
       </div>
+
+      {/* Экран загрузки: показывает прогресс вместо чёрного, пока грузятся текстуры */}
+      <Loader
+        containerStyles={{ background: 'radial-gradient(circle at 50% 40%, #1a0b1f 0%, #000 80%)' }}
+        barStyles={{ background: '#ff6b9d' }}
+        dataStyles={{ color: '#ffd1e6', fontSize: '14px', letterSpacing: '0.05em' }}
+        dataInterpolation={(p) => `Загрузка космоса… ${p.toFixed(0)}%`}
+      />
 
       <div className="ui-overlay">
         <div style={{ marginTop: '0.5rem' }}>
