@@ -1,0 +1,12 @@
+node_modules
+.git
+dist
+*.log
+# Оригиналы фото в корне галереи сайту не нужны — он грузит только webp
+# из public/gallery/thumbs и public/gallery/full. Не загружаем ~520 МБ лишнего.
+public/gallery/*.JPG
+public/gallery/*.jpg
+public/gallery/*.jpeg
+public/gallery/*.png
+public/gallery/*.PNG
+public/gallery/*.jpeg
